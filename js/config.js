@@ -1,0 +1,1 @@
+export const CONFIG=Object.freeze({appId:'CALPRO',productCode:'CP',appName:'Calculator Pro',tenantId:'TNT-DEV-000001',userId:'USR-DEV-000001',apiUrl:'https://script.google.com/macros/s/AKfycbzn6lrAmZ5VA-2K4Wuh_AZheps61hhiGfhV6kDzKeoejnyt8FSKHo50qfSYIxcII8MC/exec',storageKey:'calpro:calculations:v1'});

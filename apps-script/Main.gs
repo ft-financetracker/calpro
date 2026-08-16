@@ -1,0 +1,3 @@
+function doGet(e){try{return json_({ok:true,action:(e&&e.parameter.action)||'health',appId:CP_CONFIG.APP_ID,version:CP_CONFIG.VERSION,timestamp:new Date().toISOString()})}catch(error){return json_({ok:false,error:error.message})}}
+function doPost(e){try{const body=JSON.parse((e&&e.postData&&e.postData.contents)||'{}');if(body.action!=='saveCalculation')throw new Error('Action tidak dikenali');return json_(saveCalculation_(body))}catch(error){return json_({ok:false,error:error.message})}}
+function json_(payload){return ContentService.createTextOutput(JSON.stringify(payload)).setMimeType(ContentService.MimeType.JSON)}
