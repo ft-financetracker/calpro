@@ -1,6 +1,6 @@
 # CalPro Component Registry
 
-Version: 4.1.0
+Version: 4.1.1
 
 ## Atoms
 

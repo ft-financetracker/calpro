@@ -444,6 +444,15 @@ function bindGlobalEvents() {
   });
 
   $$('[data-scroll]').forEach(button => { button.addEventListener('click', () => $('#' + button.dataset.scroll).scrollIntoView({ behavior: 'smooth' })); });
+  $$('a[href="#beranda"]').forEach(link => {
+    link.addEventListener('click', event => {
+      event.preventDefault();
+      window.history.replaceState(null, document.title, `${window.location.pathname}${window.location.search}`);
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      const mobileHome = $('[data-mobile-nav="home"]');
+      if (mobileHome) setMobileNavigationActive(mobileHome);
+    });
+  });
   $$('[data-open-help]').forEach(button => { button.addEventListener('click', openInfo); });
   $$('[data-open-about]').forEach(button => { button.addEventListener('click', openAbout); });
   $$('[data-close-dialog]').forEach(button => { button.addEventListener('click', () => button.closest('dialog').close()); });

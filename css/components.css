@@ -79,6 +79,9 @@
 .number-field > div:focus-within { border-color: var(--cp-blue-600); background: var(--cp-white); box-shadow: 0 0 0 3px rgba(41, 87, 189, .1); }
 .number-field input { min-width: 0; width: 100%; border: 0; outline: 0; color: var(--cp-ink); background: transparent; font-family: var(--font-number); font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums lining-nums; }
 .number-field b { color: var(--cp-muted); font-size: 12px; }
+input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { margin: 0; -webkit-appearance: none; appearance: none; }
 
 /* SEGMENTED CONTROL */
 .segmented-control { margin-bottom: 16px; padding: 4px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; border: 1px solid var(--cp-line); border-radius: 11px; background: #f5f7fa; }
@@ -114,8 +117,8 @@
 .calculator-description { max-width: 680px; margin: -10px 0 16px; color: var(--cp-muted); font-size: 12px; }
 
 /* RESULT CARD */
-.result-card { position: relative; overflow: hidden; border: 1px solid #234c9e; border-radius: 15px; color: var(--cp-white); background: radial-gradient(circle at 94% 4%, #1e479e 0, transparent 40%), linear-gradient(135deg, var(--cp-navy-950), #081b45); box-shadow: 0 12px 28px rgba(2, 11, 36, .14); }
-.result-card::after { content: ""; position: absolute; right: -45px; bottom: -52px; width: 230px; height: 150px; opacity: .14; background: repeating-linear-gradient(135deg, transparent 0 17px, #4d7be1 18px 20px); }
+.result-card { position: relative; overflow: hidden; border: 1px solid #234c9e; border-radius: 15px; color: var(--cp-white); background: radial-gradient(circle at 94% 2%, rgba(30, 71, 158, .74), transparent 38%), linear-gradient(135deg, var(--cp-navy-950), #081b45); box-shadow: 0 12px 28px rgba(2, 11, 36, .14); }
+.result-card::after { content: ""; position: absolute; right: -86px; bottom: -118px; width: 210px; height: 210px; border: 30px solid rgba(52, 95, 187, .22); border-radius: 58px; background: transparent; transform: rotate(34deg); }
 .result-card > * { position: relative; z-index: 1; }
 .result-card-main { padding: 22px 23px; display: grid; grid-template-columns: minmax(205px, 1.15fr) minmax(330px, 1.85fr); align-items: center; gap: 22px; }
 .result-primary { min-width: 0; }

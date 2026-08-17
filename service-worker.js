@@ -1,4 +1,4 @@
-const CACHE = 'calpro-shell-v4-1-0';
+const CACHE = 'calpro-shell-v4-1-1';
 const ASSETS = [
   './',
   './index.html',
