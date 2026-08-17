@@ -1,2 +1,44 @@
-@import url("ft-theme.css");
-:root{--color-navy:#0b132b;--color-blue:#1e3a8a;--color-lime:#b6ff00;--color-ink:#1a1f2b;--color-muted:#667085;--color-line:#e2e7ef;--color-bg:#f3f6fa;--color-white:#fff;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;--space-6:32px;--space-7:48px;--radius-sm:9px;--radius-md:16px;--radius-lg:28px;--shadow-card:0 12px 30px #0b132b12;--max-width:1160px;--header-height:72px;--font:Inter,"Plus Jakarta Sans",system-ui,sans-serif}
+:root {
+  --cp-navy-950: #020b24;
+  --cp-navy-900: #0b132b;
+  --cp-navy-800: #0f214d;
+  --cp-blue-700: #1e3a8a;
+  --cp-blue-600: #2957bd;
+  --cp-blue-100: #eaf0ff;
+  --cp-lime-500: #b6ff00;
+  --cp-lime-100: #efffc7;
+  --cp-white: #ffffff;
+  --cp-surface: #ffffff;
+  --cp-background: #f3f6fb;
+  --cp-ink: #141c2f;
+  --cp-muted: #667085;
+  --cp-subtle: #98a2b3;
+  --cp-line: #d9e1ed;
+  --cp-line-strong: #bdc9db;
+  --cp-warning: #f4b740;
+  --cp-danger: #e5484d;
+
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-heading: "Montserrat", "Inter", system-ui, sans-serif;
+  --font-number: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --shadow-card: 0 10px 28px rgba(2, 11, 36, .08);
+  --shadow-dialog: 0 28px 80px rgba(2, 11, 36, .3);
+  --max-width: 1180px;
+  --header-height: 72px;
+  --motion-fast: 160ms ease;
+}

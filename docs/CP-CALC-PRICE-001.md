@@ -1,19 +1,20 @@
 # CALPRO SELLING PRICE CALCULATION
 
 **Document ID:** `CP-CALC-PRICE-001`  
-**Version:** `1.0.0`  
+**Version:** `1.1.0`  
 **Status:** `LOCKED`
 
 ## Input
 
-- HPP produk
+- HPP produk langsung, atau komponen HPP: bahan baku, kemasan, tenaga kerja, dan overhead
 - Biaya lainnya
 - Target margin
-- Kelipatan pembulatan: Rp100, Rp500, atau Rp1.000
+- Kelipatan pembulatan: Rp500 atau Rp1.000
 
 ## Rumus
 
 ```text
+HPP                 = Bahan + Kemasan + Tenaga kerja + Overhead
 Total modal         = HPP + Biaya lainnya
 Harga teoritis      = Total modal / (1 - target margin)
 Harga rekomendasi   = Harga teoritis dibulatkan ke atas

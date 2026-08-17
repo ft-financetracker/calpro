@@ -1,0 +1,39 @@
+# CalPro Component Registry
+
+Version: 4.1.0
+
+## Atoms
+
+- `button`: primary, secondary, icon, disabled, hover, focus-visible.
+- `number-field`: label, numeric input, optional suffix.
+- `material-symbols-rounded`: icon system untuk seluruh UI.
+- `status-badge`: status Sesuai, Kurang, atau Lebih.
+
+## Molecules
+
+- `search-field`: pencarian katalog kalkulator.
+- `segmented-control`: pilihan mode Ringkas atau Susun HPP.
+- `stepper`: pengaturan jumlah pecahan kas.
+- `result-metric`: label dan nilai ringkas di dalam result card.
+- `rounding-inline`: pilihan pembulatan Rp500 atau Rp1.000.
+
+## Organisms
+
+- `app-header`: brand, navigasi desktop, dan status aplikasi.
+- `calculator-card`: kartu katalog kalkulator.
+- `calculator-tabs`: perpindahan modul di workspace.
+- `result-card`: hasil utama, metrik, dan action terkait.
+- `modal-dialog`: panduan kalkulator dan Tentang CalPro.
+- `mobile-navigation`: lima menu dengan CTA Hitung berbentuk diamond.
+
+## Templates
+
+- `calculator-panel`: header kalkulator, input, result card, dan action simpan.
+- `selling-layout`: mode HPP, input harga, hasil, pembulatan, dan estimasi.
+
+## Aturan penggunaan
+
+- Warna wajib memakai token di `css/tokens.css`.
+- Heading memakai Montserrat, body memakai Inter, angka memakai Plus Jakarta Sans.
+- Icon UI hanya memakai Google Material Symbols Rounded.
+- Perubahan responsif dilakukan di `css/responsive.css` tanpa menduplikasi markup.

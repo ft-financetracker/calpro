@@ -13,10 +13,18 @@ test('menghitung margin berdasarkan harga jual dan membulatkan ke Rp500', () => 
 });
 
 test('biaya lainnya selalu masuk ke total modal sebelum margin dihitung', () => {
-  const result = calculateSellingPrice({ hpp: 4000, otherCost: 1000, targetMargin: 20, rounding: 100 });
+  const result = calculateSellingPrice({ hpp: 4000, otherCost: 1000, targetMargin: 20, rounding: 500 });
 
   assert.equal(result.totalCost, 5000);
   assert.equal(result.theoreticalPrice, 6250);
-  assert.equal(result.recommendedPrice, 6300);
-  assert.equal(result.profit, 1300);
+  assert.equal(result.recommendedPrice, 6500);
+  assert.equal(result.profit, 1500);
+});
+
+test('estimasi hanya membandingkan pembulatan Rp500 dan Rp1.000', () => {
+  const result = calculateSellingPrice({ hpp: 4000, targetMargin: 27, rounding: 1000 });
+
+  assert.equal(result.estimatedLow, 5500);
+  assert.equal(result.estimatedHigh, 6000);
+  assert.equal(result.recommendedPrice, 6000);
 });

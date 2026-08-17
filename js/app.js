@@ -1,6 +1,11 @@
 import { CONFIG } from './config.js';
 import { saveRemote } from './api.js';
+import { calculateCashDeposit, CASH_DENOMINATIONS } from './calculators/cash.js';
+import { calculateDiscount } from './calculators/discount.js';
+import { calculateHpp } from './calculators/hpp.js';
+import { calculateMarketplaceFee } from './calculators/marketplace.js';
 import { calculateSellingPrice } from './calculators/selling-price.js';
+import { calculatorHeader, numberField, resultMetric } from './components/templates.js';
 
 const rupiah = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
 const percent = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -8,57 +13,77 @@ const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 
 const catalog = [
-  { code: 'CASH_DEPOSIT', title: 'Setoran Kas', desc: 'Hitung pecahan dan selisih kas', icon: 'payments' },
-  { code: 'SELLING_PRICE', title: 'Harga Jual', desc: 'HPP, biaya, margin & rekomendasi', icon: 'sell' },
+  { code: 'CASH_DEPOSIT', title: 'Setoran Kas', desc: 'Pecahan, total, dan selisih kas', icon: 'payments' },
+  { code: 'SELLING_PRICE', title: 'Harga & HPP', desc: 'Susun HPP dan rekomendasi harga', icon: 'sell' },
   { code: 'DISCOUNT', title: 'Diskon', desc: 'Harga akhir dan nilai hemat', icon: 'percent' },
-  { code: 'MARKETPLACE_FEE', title: 'Biaya Marketplace', desc: 'Fee dan penerimaan bersih', icon: 'storefront' }
+  { code: 'MARKETPLACE_FEE', title: 'Biaya Marketplace', desc: 'Potongan dan penerimaan bersih', icon: 'storefront' }
 ];
 
 const guides = {
   CASH_DEPOSIT: {
-    steps: ['Masukkan jumlah lembar pada setiap pecahan.', 'Isi total setoran menurut catatan.', 'Periksa status sesuai, kurang, atau lebih.'],
-    formula: 'Total aktual = Σ (pecahan × jumlah lembar)\nSelisih = Total aktual − Setoran catatan',
-    note: 'Selisih positif berarti uang lebih; selisih negatif berarti uang kurang.'
+    purpose: 'Menghitung total uang fisik berdasarkan pecahan, lalu membandingkannya dengan nominal setoran pada catatan.',
+    steps: ['Isi jumlah lembar atau keping pada setiap nominal.', 'Masukkan setoran menurut catatan.', 'Periksa total aktual, selisih, dan status kas.'],
+    formula: 'Total aktual = Σ (nominal × jumlah)\nSelisih = Total aktual − Setoran catatan',
+    note: 'Selisih positif berarti uang lebih. Selisih negatif berarti uang kurang.',
+    example: 'Rp100.000 × 10 + Rp50.000 × 4 + Rp20.000 × 5 = Rp1.300.000. Jika catatan juga Rp1.300.000, statusnya Sesuai.'
   },
   SELLING_PRICE: {
-    steps: ['Masukkan HPP produk.', 'Tambahkan biaya lainnya yang ikut membentuk modal.', 'Isi target margin lalu pilih kelipatan pembulatan harga.'],
-    formula: 'Total modal = HPP + Biaya lainnya\nHarga teoritis = Total modal ÷ (1 − target margin)\nMargin aktual = (Harga rekomendasi − Total modal) ÷ Harga rekomendasi',
-    note: 'Margin dihitung dari harga jual, bukan markup atas HPP. Harga rekomendasi selalu dibulatkan ke atas sesuai pilihan.'
+    purpose: 'Menyusun HPP produk atau memakai HPP yang sudah tersedia, lalu menentukan harga jual berdasarkan target margin.',
+    steps: ['Pilih Ringkas jika HPP sudah diketahui, atau Susun HPP untuk menjumlahkan komponen biaya.', 'Isi biaya lainnya dan target margin.', 'Pilih pembulatan Rp500 atau Rp1.000 di dalam card hasil.'],
+    formula: 'HPP = Bahan + Kemasan + Tenaga kerja + Overhead\nTotal modal = HPP + Biaya lainnya\nHarga teoritis = Total modal ÷ (1 − Target margin)\nMargin aktual = (Harga rekomendasi − Total modal) ÷ Harga rekomendasi',
+    note: 'Margin dihitung dari harga jual, bukan markup dari HPP. Harga rekomendasi dibulatkan ke atas agar target margin tidak turun.',
+    example: 'HPP Rp4.000, biaya lain Rp0, dan margin 27% menghasilkan harga teoritis Rp5.479. Pembulatan Rp500 memberi rekomendasi Rp5.500 dan margin aktual 27,27%.'
   },
   DISCOUNT: {
-    steps: ['Masukkan harga awal.', 'Isi persentase diskon.', 'Lihat harga akhir dan nominal penghematan.'],
-    formula: 'Nilai diskon = Harga awal × persentase\nHarga akhir = Harga awal − Nilai diskon',
-    note: 'Persentase ditulis sebagai angka, misalnya 20 untuk diskon 20%.'
+    purpose: 'Menghitung harga yang dibayar pelanggan setelah diskon dari Harga Jual Awal—bukan dari HPP produk.',
+    steps: ['Masukkan Harga Jual Awal.', 'Isi persentase diskon.', 'Lihat Harga Setelah Diskon dan nominal yang dihemat pelanggan.'],
+    formula: 'Nilai diskon = Harga Jual Awal × Diskon\nHarga setelah diskon = Harga Jual Awal − Nilai diskon',
+    note: 'Bandingkan harga setelah diskon dengan HPP secara terpisah bila ingin memastikan penjualan tetap untung.',
+    example: 'Harga jual awal Rp250.000 dengan diskon 20% menghasilkan harga akhir Rp200.000 dan pelanggan hemat Rp50.000.'
   },
   MARKETPLACE_FEE: {
-    steps: ['Masukkan harga jual produk.', 'Isi persentase layanan dan biaya tetap.', 'Lihat penerimaan bersih setelah biaya.'],
-    formula: 'Total biaya = (Harga jual × fee) + biaya tetap\nPenerimaan bersih = Harga jual − Total biaya',
-    note: 'Gunakan fee sesuai kategori dan program marketplace yang aktif.'
+    purpose: 'Menghitung uang bersih yang diterima penjual setelah biaya layanan persentase dan biaya tetap marketplace.',
+    steps: ['Masukkan harga jual di marketplace.', 'Isi persentase biaya layanan.', 'Tambahkan biaya tetap per transaksi bila ada.', 'Periksa total biaya dan persentase biaya efektif.'],
+    formula: 'Biaya persentase = Harga jual × Biaya layanan\nTotal biaya = Biaya persentase + Biaya tetap\nPenerimaan bersih = Harga jual − Total biaya\nBiaya efektif = Total biaya ÷ Harga jual',
+    note: 'Biaya efektif dapat lebih besar daripada biaya layanan karena sudah memasukkan biaya tetap.',
+    example: 'Harga Rp100.000, layanan 8%, dan biaya tetap Rp1.250 menghasilkan total biaya Rp9.250, penerimaan Rp90.750, dan biaya efektif 9,25%.'
   }
 };
 
-let active = 'CASH_DEPOSIT';
-let currentResult = {};
-let sellingRounding = 500;
+const state = {
+  active: 'CASH_DEPOSIT',
+  currentResult: {},
+  selling: {
+    mode: 'QUICK',
+    rounding: 500,
+    quick: { hpp: 4000, otherCost: 0, targetMargin: 27 },
+    builder: { materialCost: 2500, packagingCost: 500, laborCost: 500, overheadCost: 500, otherCost: 0, targetMargin: 27 }
+  }
+};
 
-function numberField(id, label, value, suffix = '') {
-  return `<label class="number-field"><span>${label}</span><div><input id="${id}" type="number" min="0" inputmode="decimal" value="${value}">${suffix ? `<b>${suffix}</b>` : ''}</div></label>`;
+function setText(selector, value) {
+  const element = $(selector);
+  if (element) element.textContent = value;
+}
+
+function formatPriceRange(low, high) {
+  return low === high ? rupiah.format(low) : `${rupiah.format(low)} – ${rupiah.format(high)}`;
 }
 
 function renderCatalog(items = catalog) {
   $('#calculatorGrid').innerHTML = items.map(item => `
-    <button class="calculator-card ${item.code === active ? 'active' : ''}" data-code="${item.code}">
-      <i class="material-symbols-rounded">${item.icon}</i>
+    <button type="button" class="calculator-card ${item.code === state.active ? 'active' : ''}" data-code="${item.code}" aria-pressed="${item.code === state.active}">
+      <span class="material-symbols-rounded" aria-hidden="true">${item.icon}</span>
       <span><b>${item.title}</b><small>${item.desc}</small></span>
-      <em class="material-symbols-rounded">arrow_forward</em>
+      <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
     </button>`).join('');
-  $('#resultCount').textContent = `${items.length} kalkulator ditemukan`;
-  $$('.calculator-card').forEach(button => { button.onclick = () => selectCalculator(button.dataset.code, true); });
+  setText('#resultCount', `${items.length} kalkulator ditemukan`);
+  $$('.calculator-card').forEach(button => { button.addEventListener('click', () => selectCalculator(button.dataset.code, true)); });
 }
 
 function renderTabs() {
-  $('#calculatorTabs').innerHTML = catalog.map(item => `<button class="${item.code === active ? 'active' : ''}" data-code="${item.code}">${item.title}</button>`).join('');
-  $$('#calculatorTabs button').forEach(button => { button.onclick = () => selectCalculator(button.dataset.code); });
+  $('#calculatorTabs').innerHTML = catalog.map(item => `<button type="button" class="${item.code === state.active ? 'active' : ''}" data-code="${item.code}" aria-pressed="${item.code === state.active}">${item.title}</button>`).join('');
+  $$('#calculatorTabs button').forEach(button => { button.addEventListener('click', () => selectCalculator(button.dataset.code)); });
 }
 
 function filterCatalog(term) {
@@ -67,99 +92,206 @@ function filterCatalog(term) {
 }
 
 function selectCalculator(code, scroll = false) {
-  active = code;
+  state.active = code;
   renderCatalog(filterCatalog($('#calculatorSearch').value));
   renderTabs();
   renderCalculator();
   if (scroll) $('#workspace').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function header(title, kicker) {
-  return `<header class="calculator-header"><div><span class="eyebrow">${kicker}</span><h2>${title}</h2></div><div class="header-tools"><button class="icon-button" data-info aria-label="Lihat panduan dan rumus"><span class="material-symbols-rounded">info</span></button>${active === 'CASH_DEPOSIT' ? '<button class="button button-secondary" id="resetCash">Reset</button>' : ''}</div></header>`;
+function bindInfoButtons() {
+  $$('[data-info]').forEach(button => { button.addEventListener('click', openInfo); });
 }
 
-function bindInfoButtons() {
-  $$('[data-info]').forEach(button => { button.onclick = openInfo; });
+function bindInputCalculation(callback) {
+  $$('#calculatorPanel input').forEach(input => { input.addEventListener('input', callback); });
 }
 
 function renderCalculator() {
-  if (active === 'CASH_DEPOSIT') return renderCash();
-  if (active === 'SELLING_PRICE') return renderSellingPrice();
+  if (state.active === 'CASH_DEPOSIT') return renderCash();
+  if (state.active === 'SELLING_PRICE') return renderSellingPrice();
+  if (state.active === 'DISCOUNT') return renderDiscount();
+  return renderMarketplace();
+}
 
-  const data = active === 'DISCOUNT'
-    ? { title: 'Kalkulator Diskon', a: ['amount', 'Harga awal', 250000], b: ['rate', 'Besaran diskon', 20] }
-    : { title: 'Biaya Marketplace', a: ['amount', 'Harga jual', 100000], b: ['rate', 'Biaya layanan', 8], c: ['cost', 'Biaya tetap', 1250] };
+function renderCash() {
+  const initialQuantities = [10, 4, 5, 0, 0, 0, 0, 0];
+  $('#calculatorPanel').innerHTML = `${calculatorHeader('Kalkulator Setoran', 'KAS & SETORAN', { showReset: true })}
+    <div class="cash-grid">
+      ${CASH_DENOMINATIONS.map((denomination, index) => `<div class="cash-row">
+        <b>${rupiah.format(denomination)}</b>
+        <div class="stepper">
+          <button type="button" data-step="-1" aria-label="Kurangi jumlah ${rupiah.format(denomination)}">−</button>
+          <input class="cash-quantity" type="number" min="0" step="1" data-piece="${denomination}" inputmode="numeric" aria-label="Jumlah ${rupiah.format(denomination)}" value="${initialQuantities[index] || ''}">
+          <button type="button" data-step="1" aria-label="Tambah jumlah ${rupiah.format(denomination)}">+</button>
+        </div>
+        <output>${rupiah.format(0)}</output>
+      </div>`).join('')}
+    </div>
+    <div class="target-field">${numberField('cashTarget', 'Setoran menurut catatan', 1300000)}</div>
+    <section class="result-card cash-result-card" aria-live="polite">
+      <div class="result-card-main">
+        <div class="result-primary"><span>Total aktual</span><strong id="cashTotal"></strong><small>Berdasarkan nominal dan jumlah yang diinput</small></div>
+        <div class="result-metrics">${resultMetric('Selisih dari catatan', 'cashDifference', { highlight: true })}</div>
+        <em class="status-badge" id="cashState"></em>
+      </div>
+    </section>`;
 
-  $('#calculatorPanel').innerHTML = `${header(data.title, 'CALPRO SMART ENGINE')}
-    <div class="field-grid">${numberField(...data.a)}${numberField(...data.b, '%')}${data.c ? numberField(...data.c) : ''}</div>
-    <section class="result-panel" aria-live="polite"><span id="resultLabel"></span><strong id="resultValue"></strong><small>Dihitung otomatis saat input berubah</small></section>
-    <div class="result-details"><span id="detailLabel"></span><span>Persentase<b id="rateValue"></b></span></div>`;
-  $$('#calculatorPanel input').forEach(input => { input.oninput = calculateStandard; });
+  $$('.stepper button').forEach(button => {
+    button.addEventListener('click', () => {
+      const input = button.parentElement.querySelector('input');
+      input.value = Math.max(0, (Number(input.value) || 0) + Number(button.dataset.step));
+      calculateCash();
+    });
+  });
+  bindInputCalculation(calculateCash);
+  $('#resetCash').addEventListener('click', () => {
+    $$('.cash-quantity').forEach(input => { input.value = ''; });
+    calculateCash();
+  });
   bindInfoButtons();
-  calculateStandard();
+  calculateCash();
+}
+
+function calculateCash() {
+  const denominations = $$('.cash-quantity').map(input => ({ value: Number(input.dataset.piece), quantity: Number(input.value) || 0 }));
+  const result = calculateCashDeposit(denominations, $('#cashTarget').value);
+
+  result.rows.forEach((row, index) => {
+    const output = $$('.cash-row output')[index];
+    if (output) output.textContent = rupiah.format(row.subtotal);
+  });
+  setText('#cashTotal', rupiah.format(result.total));
+  setText('#cashDifference', rupiah.format(result.difference));
+  setText('#cashState', result.difference === 0 ? 'Sesuai' : result.difference < 0 ? 'Kurang' : 'Lebih');
+  $('#cashState').classList.toggle('warning', result.difference !== 0);
+
+  state.currentResult = {
+    input: { target: result.target, denominations: result.rows.map(({ value, quantity }) => ({ value, quantity })) },
+    result: { total: result.total, difference: result.difference },
+    title: 'Setoran Kas'
+  };
+}
+
+function sellingModeControl() {
+  return `<div class="segmented-control" role="group" aria-label="Mode perhitungan Harga dan HPP">
+    <button type="button" data-selling-mode="QUICK" class="${state.selling.mode === 'QUICK' ? 'active' : ''}" aria-pressed="${state.selling.mode === 'QUICK'}">Ringkas</button>
+    <button type="button" data-selling-mode="BUILDER" class="${state.selling.mode === 'BUILDER' ? 'active' : ''}" aria-pressed="${state.selling.mode === 'BUILDER'}">Susun HPP</button>
+  </div>`;
+}
+
+function sellingInputTemplate() {
+  if (state.selling.mode === 'QUICK') {
+    const values = state.selling.quick;
+    return `<div class="pane-heading"><span>MODE RINGKAS</span><p>Gunakan jika HPP produk sudah tersedia.</p></div>
+      <div class="selling-fields">
+        ${numberField('hpp', 'HPP produk', values.hpp)}
+        ${numberField('otherCost', 'Biaya lainnya', values.otherCost)}
+        ${numberField('targetMargin', 'Target margin', values.targetMargin, '%', { max: 99.99, step: .01 })}
+      </div>`;
+  }
+
+  const values = state.selling.builder;
+  return `<div class="pane-heading"><span>MODE SUSUN HPP</span><p>Jumlahkan biaya yang membentuk satu unit produk.</p></div>
+    <div class="hpp-fields">
+      ${numberField('materialCost', 'Bahan baku', values.materialCost)}
+      ${numberField('packagingCost', 'Kemasan', values.packagingCost)}
+      ${numberField('laborCost', 'Tenaga kerja', values.laborCost)}
+      ${numberField('overheadCost', 'Overhead', values.overheadCost)}
+    </div>
+    <div class="hpp-total-note"><span>HPP produk tersusun</span><b id="hppBuildValue"></b></div>
+    <div class="supplementary-fields">
+      ${numberField('otherCost', 'Biaya penjualan lainnya', values.otherCost)}
+      ${numberField('targetMargin', 'Target margin', values.targetMargin, '%', { max: 99.99, step: .01 })}
+    </div>`;
+}
+
+function sellingResultTemplate() {
+  return `<section class="result-card price-result-card" aria-live="polite">
+    <div class="result-card-main">
+      <div class="result-primary"><span>Harga rekomendasi</span><strong id="sellingResultValue"></strong><small>HPP dan biaya lainnya sudah diperhitungkan</small></div>
+      <div class="result-metrics">
+        ${resultMetric('Harga teoritis', 'theoreticalValue')}
+        ${resultMetric('Margin aktual', 'actualMarginValue', { highlight: true })}
+        ${resultMetric('Total modal', 'totalCostValue')}
+        ${resultMetric('Estimasi laba', 'profitValue')}
+      </div>
+    </div>
+    <div class="result-toolbar">
+      <div class="rounding-inline"><span>Pembulatan</span>${[500, 1000].map(value => `<button type="button" class="${value === state.selling.rounding ? 'active' : ''}" data-rounding="${value}" aria-pressed="${value === state.selling.rounding}">${rupiah.format(value)}</button>`).join('')}</div>
+      <div class="estimate-inline"><span class="material-symbols-rounded" aria-hidden="true">query_stats</span><span>Estimasi harga jual</span><b id="estimateValue"></b></div>
+    </div>
+  </section>`;
 }
 
 function renderSellingPrice() {
-  $('#calculatorPanel').innerHTML = `${header('Kalkulator Harga Jual', 'HARGA & MARGIN')}
+  $('#calculatorPanel').innerHTML = `${calculatorHeader('Harga & HPP', 'HARGA, HPP & MARGIN')}
     <div class="selling-layout">
-      <section class="selling-input-pane">
-        <div class="pane-heading"><span>INPUT PERHITUNGAN</span><p>Masukkan biaya dengan lengkap agar rekomendasi tidak terlalu rendah.</p></div>
-        <div class="selling-fields">
-          ${numberField('amount', 'HPP produk', 4000)}
-          ${numberField('cost', 'Biaya lainnya', 0)}
-          ${numberField('rate', 'Target margin', 27, '%')}
-        </div>
-        <fieldset class="rounding-control">
-          <legend>Pembulatan harga</legend>
-          <p>Harga rekomendasi dibulatkan ke atas.</p>
-          <div class="rounding-options">
-            ${[100, 500, 1000].map(value => `<button type="button" class="${value === sellingRounding ? 'active' : ''}" data-rounding="${value}">${rupiah.format(value)}</button>`).join('')}
-          </div>
-        </fieldset>
-      </section>
-      <section class="selling-result-pane" aria-live="polite">
-        <span class="result-kicker">HARGA REKOMENDASI</span>
-        <strong id="resultValue"></strong>
-        <small>Sudah termasuk HPP dan biaya lainnya</small>
-        <div class="price-summary-grid">
-          <span>Harga teoritis<b id="theoreticalValue"></b></span>
-          <span>Margin aktual<b id="actualMarginValue"></b></span>
-          <span>Total modal<b id="totalCostValue"></b></span>
-          <span>Estimasi laba<b id="profitValue"></b></span>
-        </div>
-        <div class="estimate-strip"><span class="material-symbols-rounded">query_stats</span><span>Estimasi harga jual<small>Rentang praktis dari pembulatan Rp100–Rp1.000</small></span><b id="estimateValue"></b></div>
-      </section>
+      <section class="selling-input-pane">${sellingModeControl()}${sellingInputTemplate()}</section>
+      ${sellingResultTemplate()}
     </div>`;
 
-  $$('#calculatorPanel input').forEach(input => { input.oninput = calculateSelling; });
-  $$('.rounding-options button').forEach(button => {
-    button.onclick = () => {
-      sellingRounding = Number(button.dataset.rounding);
-      $$('.rounding-options button').forEach(item => item.classList.toggle('active', item === button));
-      calculateSelling();
-    };
+  $$('[data-selling-mode]').forEach(button => {
+    button.addEventListener('click', () => {
+      state.selling.mode = button.dataset.sellingMode;
+      renderSellingPrice();
+    });
   });
+  $$('[data-rounding]').forEach(button => {
+    button.addEventListener('click', () => {
+      state.selling.rounding = Number(button.dataset.rounding);
+      $$('[data-rounding]').forEach(item => {
+        const active = item === button;
+        item.classList.toggle('active', active);
+        item.setAttribute('aria-pressed', String(active));
+      });
+      calculateSelling();
+    });
+  });
+  bindInputCalculation(calculateSelling);
   bindInfoButtons();
   calculateSelling();
 }
 
-function calculateSelling() {
-  const result = calculateSellingPrice({
-    hpp: $('#amount').value,
-    otherCost: $('#cost').value,
-    targetMargin: $('#rate').value,
-    rounding: sellingRounding
-  });
+function readSellingInput() {
+  if (state.selling.mode === 'QUICK') {
+    state.selling.quick = {
+      hpp: Number($('#hpp').value) || 0,
+      otherCost: Number($('#otherCost').value) || 0,
+      targetMargin: Number($('#targetMargin').value) || 0
+    };
+    return { hpp: state.selling.quick.hpp, otherCost: state.selling.quick.otherCost, targetMargin: state.selling.quick.targetMargin, components: null };
+  }
 
-  $('#resultValue').textContent = rupiah.format(result.recommendedPrice);
-  $('#theoreticalValue').textContent = rupiah.format(Math.round(result.theoreticalPrice));
-  $('#actualMarginValue').textContent = `${percent.format(result.actualMargin)}%`;
-  $('#totalCostValue').textContent = rupiah.format(result.totalCost);
-  $('#profitValue').textContent = rupiah.format(result.profit);
-  $('#estimateValue').textContent = `${rupiah.format(result.estimatedLow)} – ${rupiah.format(result.estimatedHigh)}`;
-  currentResult = {
+  state.selling.builder = {
+    materialCost: Number($('#materialCost').value) || 0,
+    packagingCost: Number($('#packagingCost').value) || 0,
+    laborCost: Number($('#laborCost').value) || 0,
+    overheadCost: Number($('#overheadCost').value) || 0,
+    otherCost: Number($('#otherCost').value) || 0,
+    targetMargin: Number($('#targetMargin').value) || 0
+  };
+  const hpp = calculateHpp(state.selling.builder);
+  setText('#hppBuildValue', rupiah.format(hpp.hpp));
+  return { hpp: hpp.hpp, otherCost: state.selling.builder.otherCost, targetMargin: state.selling.builder.targetMargin, components: hpp };
+}
+
+function calculateSelling() {
+  const input = readSellingInput();
+  const result = calculateSellingPrice({ ...input, rounding: state.selling.rounding });
+
+  setText('#sellingResultValue', rupiah.format(result.recommendedPrice));
+  setText('#theoreticalValue', rupiah.format(Math.round(result.theoreticalPrice)));
+  setText('#actualMarginValue', `${percent.format(result.actualMargin)}%`);
+  setText('#totalCostValue', rupiah.format(result.totalCost));
+  setText('#profitValue', rupiah.format(result.profit));
+  setText('#estimateValue', formatPriceRange(result.estimatedLow, result.estimatedHigh));
+
+  state.currentResult = {
     input: {
+      mode: state.selling.mode,
       hpp: result.hpp,
+      hppComponents: input.components,
       otherCost: result.otherCost,
       totalCost: result.totalCost,
       targetMargin: result.targetMargin,
@@ -173,106 +305,112 @@ function calculateSelling() {
       estimatedHigh: result.estimatedHigh,
       profit: result.profit
     },
-    title: 'Harga Jual Rekomendasi'
+    title: 'Harga & HPP'
   };
 }
 
-function calculateStandard() {
-  const amount = +$('#amount').value || 0;
-  const rate = +$('#rate').value || 0;
-  const cost = $('#cost') ? +$('#cost').value || 0 : 0;
-  let result = 0;
-  let detail = 0;
-  let label = '';
-  let detailLabel = '';
-
-  if (active === 'DISCOUNT') {
-    detail = amount * rate / 100;
-    result = amount - detail;
-    label = 'Harga setelah diskon';
-    detailLabel = 'Pelanggan hemat';
-  } else {
-    detail = amount * rate / 100 + cost;
-    result = amount - detail;
-    label = 'Penerimaan bersih';
-    detailLabel = 'Total biaya';
-  }
-
-  $('#resultLabel').textContent = label;
-  $('#resultValue').textContent = rupiah.format(result);
-  $('#detailLabel').innerHTML = `${detailLabel}<b>${rupiah.format(detail)}</b>`;
-  $('#rateValue').textContent = `${percent.format(rate)}%`;
-  currentResult = { input: { amount, rate, cost }, result: { value: result, detail }, title: label };
+function standardResultCard({ label, valueId, helper, metrics }) {
+  return `<section class="result-card standard-result-card" aria-live="polite">
+    <div class="result-card-main">
+      <div class="result-primary"><span>${label}</span><strong id="${valueId}"></strong><small>${helper}</small></div>
+      <div class="result-metrics">${metrics.join('')}</div>
+    </div>
+  </section>`;
 }
 
-function renderCash() {
-  const pieces = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500];
-  $('#calculatorPanel').innerHTML = `${header('Kalkulator Setoran', 'KAS & SETORAN')}
-    <div class="cash-grid">${pieces.map((piece, index) => `<div class="cash-row"><span><small>PECAHAN</small><b>${rupiah.format(piece)}</b></span><div class="stepper"><button data-step="-1" aria-label="Kurangi">−</button><input data-piece="${piece}" inputmode="numeric" value="${index === 0 ? 10 : index === 1 ? 4 : index === 2 ? 5 : ''}"><button data-step="1" aria-label="Tambah">+</button></div><strong>Rp0</strong></div>`).join('')}</div>
-    <div class="target-field">${numberField('cashTarget', 'Setoran menurut catatan', 1300000)}</div>
-    <section class="cash-summary"><span>Total aktual<b id="cashTotal"></b></span><span>Selisih<b id="cashDifference"></b></span><em id="cashState"></em></section>`;
-  $$('.stepper button').forEach(button => {
-    button.onclick = () => {
-      const input = button.parentElement.querySelector('input');
-      input.value = Math.max(0, (+input.value || 0) + (+button.dataset.step));
-      calculateCash();
-    };
-  });
-  $$('.stepper input, #cashTarget').forEach(input => { input.oninput = calculateCash; });
-  $('#resetCash').onclick = () => {
-    $$('.stepper input').forEach(input => { input.value = ''; });
-    calculateCash();
-  };
+function renderDiscount() {
+  $('#calculatorPanel').innerHTML = `${calculatorHeader('Kalkulator Diskon', 'PROMO & HARGA JUAL')}
+    <div class="field-grid two-columns">
+      ${numberField('sellingPrice', 'Harga Jual Awal', 250000)}
+      ${numberField('discountRate', 'Diskon', 20, '%', { max: 100, step: .01 })}
+    </div>
+    ${standardResultCard({
+      label: 'Harga setelah diskon',
+      valueId: 'discountResultValue',
+      helper: 'Harga yang dibayar pelanggan',
+      metrics: [resultMetric('Pelanggan hemat', 'savingsValue'), resultMetric('Persentase diskon', 'discountRateValue')]
+    })}`;
+  bindInputCalculation(calculateDiscountResult);
   bindInfoButtons();
-  calculateCash();
+  calculateDiscountResult();
 }
 
-function calculateCash() {
-  let total = 0;
-  $$('.stepper input').forEach(input => {
-    const subtotal = (+input.dataset.piece) * (+input.value || 0);
-    total += subtotal;
-    input.closest('.cash-row').querySelector('strong').textContent = rupiah.format(subtotal);
-  });
-  const target = +$('#cashTarget').value || 0;
-  const difference = total - target;
-  $('#cashTotal').textContent = rupiah.format(total);
-  $('#cashDifference').textContent = rupiah.format(difference);
-  $('#cashDifference').className = difference === 0 ? 'ok' : 'warn';
-  $('#cashState').textContent = difference === 0 ? 'Sesuai' : difference < 0 ? 'Kurang' : 'Lebih';
-  $('#cashState').className = difference === 0 ? 'good' : 'bad';
-  currentResult = {
-    input: { target, denominations: $$('.stepper input').map(input => ({ value: +input.dataset.piece, quantity: +input.value || 0 })) },
-    result: { total, difference },
-    title: 'Setoran Kas'
+function calculateDiscountResult() {
+  const result = calculateDiscount({ sellingPrice: $('#sellingPrice').value, discountRate: $('#discountRate').value });
+  setText('#discountResultValue', rupiah.format(result.finalPrice));
+  setText('#savingsValue', rupiah.format(result.savings));
+  setText('#discountRateValue', `${percent.format(result.discountRate)}%`);
+  state.currentResult = {
+    input: { sellingPrice: result.sellingPrice, discountRate: result.discountRate },
+    result: { finalPrice: result.finalPrice, savings: result.savings },
+    title: 'Harga Setelah Diskon'
+  };
+}
+
+function renderMarketplace() {
+  $('#calculatorPanel').innerHTML = `${calculatorHeader('Biaya Marketplace', 'FEE & PENERIMAAN BERSIH')}
+    <p class="calculator-description">Hitung potongan platform agar Anda mengetahui uang bersih yang benar-benar diterima.</p>
+    <div class="field-grid">
+      ${numberField('sellingPrice', 'Harga jual', 100000)}
+      ${numberField('serviceRate', 'Biaya layanan', 8, '%', { max: 100, step: .01 })}
+      ${numberField('fixedCost', 'Biaya tetap per transaksi', 1250)}
+    </div>
+    ${standardResultCard({
+      label: 'Penerimaan bersih',
+      valueId: 'marketplaceResultValue',
+      helper: 'Harga jual setelah seluruh biaya marketplace',
+      metrics: [resultMetric('Total biaya', 'marketplaceCostValue'), resultMetric('Biaya efektif', 'effectiveRateValue')]
+    })}`;
+  bindInputCalculation(calculateMarketplaceResult);
+  bindInfoButtons();
+  calculateMarketplaceResult();
+}
+
+function calculateMarketplaceResult() {
+  const result = calculateMarketplaceFee({ sellingPrice: $('#sellingPrice').value, serviceRate: $('#serviceRate').value, fixedCost: $('#fixedCost').value });
+  setText('#marketplaceResultValue', rupiah.format(result.netRevenue));
+  setText('#marketplaceCostValue', rupiah.format(result.totalCost));
+  setText('#effectiveRateValue', `${percent.format(result.effectiveRate)}%`);
+  state.currentResult = {
+    input: { sellingPrice: result.sellingPrice, serviceRate: result.serviceRate, fixedCost: result.fixedCost },
+    result: { percentageCost: result.percentageCost, totalCost: result.totalCost, netRevenue: result.netRevenue, effectiveRate: result.effectiveRate },
+    title: 'Penerimaan Bersih Marketplace'
   };
 }
 
 function openInfo() {
-  const item = catalog.find(entry => entry.code === active);
-  const guide = guides[active];
-  $('#infoTitle').textContent = item.title;
+  const item = catalog.find(entry => entry.code === state.active);
+  const guide = guides[state.active];
+  setText('#infoTitle', item.title);
+  setText('#infoPurpose', guide.purpose);
   $('#infoSteps').innerHTML = guide.steps.map(step => `<li>${step}</li>`).join('');
-  $('#infoFormula').textContent = guide.formula;
-  $('#infoNote').textContent = guide.note;
+  setText('#infoFormula', guide.formula);
+  setText('#infoNote', guide.note);
+  setText('#infoExample', guide.example);
   $('#infoDialog').showModal();
 }
 
+function openAbout() {
+  $('#aboutDialog').showModal();
+}
+
 function toast(message) {
-  $('#toast').textContent = message;
-  $('#toast').classList.add('show');
-  setTimeout(() => $('#toast').classList.remove('show'), 2200);
+  const element = $('#toast');
+  element.textContent = message;
+  element.classList.add('show');
+  window.clearTimeout(toast.timeoutId);
+  toast.timeoutId = window.setTimeout(() => element.classList.remove('show'), 2300);
 }
 
 function buildRecord() {
   return {
     calculationId: `CAL-${Date.now()}`,
-    requestId: crypto.randomUUID(),
+    requestId: crypto.randomUUID ? crypto.randomUUID() : `REQ-${Date.now()}`,
     tenantId: CONFIG.tenantId,
     userId: CONFIG.userId,
     appId: CONFIG.appId,
-    calculatorCode: active,
-    ...currentResult,
+    calculatorCode: state.active,
+    ...state.currentResult,
     status: 'ACTIVE',
     syncStatus: 'PENDING',
     createdAt: new Date().toISOString()
@@ -288,25 +426,38 @@ function saveLocal(message = 'Draft tersimpan di perangkat') {
   return record;
 }
 
-$('#calculatorSearch').oninput = event => renderCatalog(filterCatalog(event.target.value));
-$('#saveDraft').onclick = () => saveLocal();
-$('#saveCalculation').onclick = async () => {
-  const record = saveLocal('Disimpan lokal, sedang sinkronisasi');
-  try {
-    const response = await saveRemote(record);
-    toast(response.pending ? 'Menunggu URL Apps Script' : 'Perhitungan tersinkron');
-  } catch {
-    toast('Offline: data aman di perangkat');
-  }
-};
-$$('[data-scroll]').forEach(button => { button.onclick = () => $('#' + button.dataset.scroll).scrollIntoView({ behavior: 'smooth' }); });
-$('#heroInfo').onclick = openInfo;
-$('#heroHistory').onclick = () => toast('Riwayat tersimpan setelah perhitungan disimpan');
-$('#closeInfo').onclick = () => $('#infoDialog').close();
-$('#mobileInfo').onclick = openInfo;
-$('#infoDialog').onclick = event => { if (event.target === $('#infoDialog')) $('#infoDialog').close(); };
-if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js'));
+function setMobileNavigationActive(target) {
+  $$('[data-mobile-nav]').forEach(item => item.classList.toggle('active', item === target));
+}
+
+function bindGlobalEvents() {
+  $('#calculatorSearch').addEventListener('input', event => renderCatalog(filterCatalog(event.target.value)));
+  $('#saveDraft').addEventListener('click', () => saveLocal());
+  $('#saveCalculation').addEventListener('click', async () => {
+    const record = saveLocal('Disimpan lokal, sedang sinkronisasi');
+    try {
+      const response = await saveRemote(record);
+      toast(response.pending ? 'Menunggu URL Apps Script' : 'Perhitungan tersinkron');
+    } catch {
+      toast('Offline: data aman di perangkat');
+    }
+  });
+
+  $$('[data-scroll]').forEach(button => { button.addEventListener('click', () => $('#' + button.dataset.scroll).scrollIntoView({ behavior: 'smooth' })); });
+  $$('[data-open-help]').forEach(button => { button.addEventListener('click', openInfo); });
+  $$('[data-open-about]').forEach(button => { button.addEventListener('click', openAbout); });
+  $$('[data-close-dialog]').forEach(button => { button.addEventListener('click', () => button.closest('dialog').close()); });
+  $$('.modal-dialog').forEach(dialog => { dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); }); });
+  $('#mobileCalculate').addEventListener('click', () => {
+    $('#workspace').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.setTimeout(() => $('#calculatorPanel input')?.focus({ preventScroll: true }), 450);
+  });
+  $$('[data-mobile-nav]').forEach(link => { link.addEventListener('click', () => setMobileNavigationActive(link)); });
+}
+
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js'));
 
 renderCatalog();
 renderTabs();
 renderCalculator();
+bindGlobalEvents();

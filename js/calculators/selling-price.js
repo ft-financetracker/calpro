@@ -29,7 +29,7 @@ export function calculateSellingPrice({ hpp = 0, otherCost = 0, targetMargin = 0
     theoreticalPrice,
     recommendedPrice,
     actualMargin,
-    estimatedLow: roundUp(theoreticalPrice, 100),
+    estimatedLow: roundUp(theoreticalPrice, 500),
     estimatedHigh: roundUp(theoreticalPrice, 1000),
     profit
   };

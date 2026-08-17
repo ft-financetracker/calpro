@@ -1,27 +1,119 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0B132B">
-  <title>Finance Tracker | Calculator Pro</title><meta name="application-name" content="Finance Tracker | Calculator Pro"><meta name="apple-mobile-web-app-title" content="FT | Calculator Pro"><meta name="description" content="CalPro — kalkulator bisnis pintar untuk UMKM.">
-  <link rel="icon" type="image/png" sizes="48x48" href="assets/icons/favicon-48.png"><link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png"><link rel="manifest" href="manifest.webmanifest"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet"><link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/app.css"><link rel="stylesheet" href="css/ft-theme.css"><link rel="stylesheet" href="css/typography.css"><link rel="stylesheet" href="css/redesign-v4.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#020B24">
+  <title>Finance Tracker | Calculator Pro</title>
+  <meta name="application-name" content="Finance Tracker | Calculator Pro">
+  <meta name="apple-mobile-web-app-title" content="FT | Calculator Pro">
+  <meta name="description" content="CalPro — kalkulator bisnis yang jelas untuk keputusan usaha yang lebih akurat.">
+  <link rel="icon" type="image/png" sizes="48x48" href="assets/icons/favicon-48.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
   <header class="app-header">
-    <a class="brand" href="#beranda" aria-label="CalPro Beranda"><img src="assets/icons/calpro-icon-192.png" alt=""><span><strong>Cal<em>Pro</em></strong><small>Calculator Pro</small></span></a>
-    <nav class="desktop-navigation" aria-label="Navigasi utama"><a href="#beranda" class="active">Beranda</a><a href="#kalkulator">Kalkulator</a><a href="#workspace">Hitung</a></nav>
-    <div class="header-actions"><span class="sync-status" id="syncStatus">● SIAP DIGUNAKAN</span><button class="avatar" aria-label="Profil pengguna">AS</button></div>
+    <a class="brand" href="#beranda" aria-label="CalPro, kembali ke beranda">
+      <img src="assets/icons/calpro-icon-192.png" alt="">
+      <span><strong>Cal<em>Pro</em></strong><small>Calculator Pro</small></span>
+    </a>
+
+    <nav class="desktop-navigation" aria-label="Navigasi utama">
+      <a href="#beranda" class="active">Beranda</a>
+      <a href="#kalkulator">Kalkulator</a>
+      <button type="button" data-open-help>Bantuan</button>
+      <button type="button" data-open-about>Tentang</button>
+    </nav>
+
+    <div class="header-actions">
+      <span class="sync-status" id="syncStatus"><span aria-hidden="true"></span> SIAP DIGUNAKAN</span>
+      <button type="button" class="avatar" aria-label="Profil pengguna">AS</button>
+    </div>
   </header>
+
   <main class="app-shell" id="beranda">
-    <section class="hero">
-      <div class="hero-copy"><span class="hero-badge">CALCULATOR WORKSPACE</span><h1>Hitung cepat.<br><em>Usaha tepat.</em></h1><p>Kalkulasi bisnis yang jelas untuk keputusan yang lebih akurat.</p></div>
-      <div class="hero-actions"><button class="button button-ghost" id="heroHistory"><span class="material-symbols-rounded">history</span> Riwayat</button><button class="button button-ghost" id="heroInfo"><span class="material-symbols-rounded">info</span> Panduan</button><button class="button button-primary" data-scroll="kalkulator"><span class="material-symbols-rounded">calculate</span> Mulai hitung</button></div>
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="hero-copy">
+        <span class="hero-badge">CALPRO · FINANCE TRACKER</span>
+        <h1 id="heroTitle">Hitung cepat.<br><em>Usaha tepat.</em></h1>
+        <p>Empat kalkulator bisnis untuk memeriksa kas, menyusun HPP, menentukan harga, dan memahami potongan penjualan.</p>
+        <button type="button" class="button button-primary" data-scroll="kalkulator">
+          <span class="material-symbols-rounded" aria-hidden="true">calculate</span>
+          Mulai menghitung
+        </button>
+      </div>
+      <div class="hero-decoration" aria-hidden="true"><span class="material-symbols-rounded">calculate</span></div>
     </section>
-    <section class="catalog" id="kalkulator"><header class="section-heading"><div><span class="eyebrow">KALKULATOR BISNIS</span><h2>Apa yang ingin Anda hitung?</h2><p>Pilih kalkulator atau gunakan pencarian cepat.</p></div><small id="resultCount">4 kalkulator ditemukan</small></header><label class="search-field"><span>⌕</span><input id="calculatorSearch" type="search" placeholder="Cari: setoran, harga jual, diskon..." autocomplete="off"></label><div class="calculator-grid" id="calculatorGrid"></div></section>
-    <section class="workspace" id="workspace"><nav class="calculator-tabs" id="calculatorTabs" aria-label="Pilih kalkulator"></nav><article class="calculator-panel" id="calculatorPanel"></article><footer class="workspace-actions"><button class="button button-secondary" id="saveDraft">Simpan draft</button><button class="button button-primary" id="saveCalculation">Simpan perhitungan →</button></footer></section>
-    <footer class="product-footer"><div class="footer-brand"><img src="assets/icons/finance-tracker-192.png" alt=""><span><strong>Finance Tracker</strong><small>Calculator Pro</small></span></div><p>Hitung Cepat. Usaha Tepat.</p><small>CalPro v4.0.0</small></footer>
+
+    <section class="catalog" id="kalkulator" aria-labelledby="catalogTitle">
+      <header class="section-heading">
+        <div><span class="eyebrow">KALKULATOR BISNIS</span><h2 id="catalogTitle">Apa yang ingin Anda hitung?</h2><p>Pilih modul atau gunakan pencarian cepat.</p></div>
+        <small id="resultCount">4 kalkulator ditemukan</small>
+      </header>
+      <label class="search-field">
+        <span class="material-symbols-rounded" aria-hidden="true">search</span>
+        <input id="calculatorSearch" type="search" placeholder="Cari setoran, HPP, diskon, marketplace..." autocomplete="off">
+      </label>
+      <div class="calculator-grid" id="calculatorGrid"></div>
+    </section>
+
+    <section class="workspace" id="workspace" aria-label="Area kalkulator">
+      <nav class="calculator-tabs" id="calculatorTabs" aria-label="Pilih kalkulator"></nav>
+      <article class="calculator-panel" id="calculatorPanel"></article>
+      <footer class="workspace-actions">
+        <button type="button" class="button button-secondary" id="saveDraft"><span class="material-symbols-rounded" aria-hidden="true">save</span>Simpan draft</button>
+        <button type="button" class="button button-primary" id="saveCalculation"><span class="material-symbols-rounded" aria-hidden="true">cloud_upload</span>Simpan perhitungan</button>
+      </footer>
+    </section>
   </main>
-  <nav class="mobile-navigation" aria-label="Navigasi mobile"><a href="#beranda" class="active"><span class="material-symbols-rounded">home</span><small>Beranda</small></a><a href="#kalkulator"><span class="material-symbols-rounded">calculate</span><small>Hitung</small></a><a href="#workspace"><span class="material-symbols-rounded">history</span><small>Riwayat</small></a><button id="mobileInfo"><span class="material-symbols-rounded">help</span><small>Bantuan</small></button></nav>
-  <dialog class="info-dialog" id="infoDialog"><header><div><span class="dialog-kicker">PANDUAN KALKULATOR</span><h2 id="infoTitle">Informasi</h2></div><button id="closeInfo" aria-label="Tutup"><span class="material-symbols-rounded">close</span></button></header><div class="info-content"><section><span class="material-symbols-rounded">touch_app</span><div><h3>Cara menggunakan</h3><ol id="infoSteps"></ol></div></section><section><span class="material-symbols-rounded">functions</span><div><h3>Rumus yang digunakan</h3><code id="infoFormula"></code><p id="infoNote"></p></div></section></div></dialog>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div><script type="module" src="js/app.js"></script>
+
+  <nav class="mobile-navigation" aria-label="Navigasi mobile">
+    <a href="#beranda" class="active" data-mobile-nav="home"><span class="material-symbols-rounded" aria-hidden="true">home</span><small>Beranda</small></a>
+    <a href="#kalkulator" data-mobile-nav="catalog"><span class="material-symbols-rounded" aria-hidden="true">grid_view</span><small>Kalkulator</small></a>
+    <button type="button" class="nav-cta" id="mobileCalculate" aria-label="Buka kalkulator aktif"><span class="nav-cta-shape"><span class="nav-cta-content"><span class="material-symbols-rounded" aria-hidden="true">calculate</span><small>Hitung</small></span></span></button>
+    <button type="button" data-open-help><span class="material-symbols-rounded" aria-hidden="true">help</span><small>Bantuan</small></button>
+    <button type="button" data-open-about><span class="material-symbols-rounded" aria-hidden="true">info</span><small>Tentang</small></button>
+  </nav>
+
+  <dialog class="modal-dialog" id="infoDialog" aria-labelledby="infoTitle">
+    <header class="dialog-header">
+      <div><span class="dialog-kicker">PANDUAN KALKULATOR</span><h2 id="infoTitle">Informasi</h2></div>
+      <button type="button" class="dialog-close" data-close-dialog aria-label="Tutup panduan"><span class="material-symbols-rounded">close</span></button>
+    </header>
+    <div class="dialog-content">
+      <section class="guide-intro"><span class="material-symbols-rounded" aria-hidden="true">lightbulb</span><div><h3>Fungsi kalkulator</h3><p id="infoPurpose"></p></div></section>
+      <section><span class="material-symbols-rounded" aria-hidden="true">touch_app</span><div><h3>Cara menggunakan</h3><ol id="infoSteps"></ol></div></section>
+      <section><span class="material-symbols-rounded" aria-hidden="true">functions</span><div><h3>Rumus yang digunakan</h3><code id="infoFormula"></code><p id="infoNote"></p></div></section>
+      <section><span class="material-symbols-rounded" aria-hidden="true">science</span><div><h3>Contoh</h3><p id="infoExample"></p></div></section>
+    </div>
+  </dialog>
+
+  <dialog class="modal-dialog about-dialog" id="aboutDialog" aria-labelledby="aboutTitle">
+    <header class="dialog-header">
+      <div><span class="dialog-kicker">TENTANG APLIKASI</span><h2 id="aboutTitle">Finance Tracker | Calculator Pro</h2></div>
+      <button type="button" class="dialog-close" data-close-dialog aria-label="Tutup tentang aplikasi"><span class="material-symbols-rounded">close</span></button>
+    </header>
+    <div class="dialog-content">
+      <section class="about-brand"><img src="assets/icons/calpro-icon-192.png" alt="Logo CalPro"><div><h3>CalPro</h3><p>Kalkulator bisnis pendamping Finance Tracker untuk membantu perhitungan operasional secara cepat, jelas, dan konsisten.</p></div></section>
+      <dl class="about-facts">
+        <div><dt>Versi</dt><dd>4.1.0</dd></div>
+        <div><dt>Parent brand</dt><dd>Finance Tracker</dd></div>
+        <div><dt>Penyimpanan</dt><dd>Perangkat &amp; Spreadsheet</dd></div>
+        <div><dt>Modul</dt><dd>4 kalkulator bisnis</dd></div>
+      </dl>
+      <p class="about-tagline">Hitung cepat. Usaha tepat.</p>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
