@@ -2,7 +2,7 @@
 
 Calculator Pro — Finance Tracker by Qulaimun.
 
-Versi frontend saat ini: **V4**.
+Versi frontend saat ini: **V5**.
 
 ## Menjalankan frontend
 
