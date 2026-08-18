@@ -2,7 +2,7 @@
 
 Calculator Pro — Finance Tracker by Qulaimun.
 
-Versi frontend saat ini: **V4.2.3**.
+Versi frontend saat ini: **V4.3.0**.
 
 ## Menjalankan frontend
 
@@ -18,7 +18,7 @@ Gunakan static server, misalnya `npx serve .`; jangan membuka `index.html` langs
 6. Masukkan URL deployment ke `js/config.js`.
 7. Publikasikan folder frontend melalui GitHub Pages.
 
-V4.2.3 tidak memerlukan migrasi Spreadsheet atau deployment Apps Script baru. Jangan menjalankan ulang `setupCalProDatabase()` pada database yang sudah berisi transaksi.
+V4.3.0 tidak memerlukan migrasi Spreadsheet atau deployment Apps Script baru. Riwayat Pencatatan/Bon menggunakan penyimpanan lokal CalPro yang sudah ada. Jangan menjalankan ulang `setupCalProDatabase()` pada database yang sudah berisi transaksi.
 
 ## Modul kalkulator
 
@@ -26,12 +26,16 @@ V4.2.3 tidak memerlukan migrasi Spreadsheet atau deployment Apps Script baru. Ja
 - Harga & HPP: tiga mode—Harga Jual, Susun HPP, dan HPP Produksi—serta tips kontekstual pada setiap mode.
 - Diskon: harga akhir dari Harga Jual Awal dan nilai hemat pelanggan.
 - Biaya Marketplace: total potongan, penerimaan bersih, dan biaya efektif.
+- Kalkulator Original: operasi angka standar—tambah, kurang, kali, bagi, persen, positif/negatif, dan desimal.
+- Pencatatan / Bon: pencatatan item satu baris per kartu, total otomatis, penyimpanan lokal, dan riwayat yang dapat dibuka kembali.
 
 Kalkulator Harga & HPP selalu membentuk `Total modal = HPP + Biaya lainnya` sebelum menerapkan target margin. Harga rekomendasi dibulatkan ke atas sesuai pilihan Rp500 atau Rp1.000. Rincian kontrak kalkulasi tersedia di `docs/CP-CALC-PRICE-001.md`.
 
 Mode HPP Produksi tidak menentukan jumlah produk secara otomatis. Pengguna mengisi estimasi jumlah produk, kemudian aplikasi menghitung `Biaya terpakai = Harga beli ÷ Jumlah isi × Jumlah dipakai` dan `HPP per produk = Total biaya produksi ÷ Estimasi jumlah produk`.
 
 Tenaga kerja batch dihitung dari `Tarif per jam × Lama produksi`. Overhead batch dibantu melalui rincian Gas/LPG, listrik, air, bensin/transport pembelian bahan, dan biaya pendukung lainnya. Tombol `i` di samping setiap judul biaya membuka rumus, langkah, serta contoh pengisian tanpa memenuhi layar utama. Pada layar sampai 800 px, rincian bahan ditampilkan sebagai kartu ringkas dengan Harga, Isi, dan Dipakai dalam satu baris.
+
+Pada Pencatatan/Bon, rumus utama adalah `Nominal = Qty × Harga Satuan`. Jika Harga Satuan dikosongkan tetapi Qty dan Nominal diisi, aplikasi menghitung balik `Harga Satuan = Nominal ÷ Qty`. Setiap item tetap berupa satu kartu horizontal pada desktop maupun mobile.
 
 ## Pengujian
 

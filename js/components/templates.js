@@ -51,6 +51,30 @@ export function costItemRow(group, item) {
   </article>`;
 }
 
+export function receiptItemRow(item) {
+  return `<article class="receipt-item" data-receipt-item data-item-id="${item.id}" data-price-source="${item.priceSource || 'UNIT_PRICE'}">
+    <label class="receipt-item-field receipt-item-name">
+      <span class="visually-hidden">Nama item (opsional)</span>
+      <input type="text" data-receipt-field="name" value="${escapeHtml(item.name)}" placeholder="Nama (opsional)" autocomplete="off">
+    </label>
+    <label class="receipt-item-field receipt-item-quantity">
+      <span class="visually-hidden">Jumlah</span>
+      <input type="number" min="0" step="0.01" inputmode="decimal" data-receipt-field="quantity" value="${item.quantity}">
+    </label>
+    <label class="receipt-item-field receipt-item-price">
+      <span class="visually-hidden">Harga satuan</span>
+      <input type="number" min="0" step="0.01" inputmode="decimal" data-receipt-field="unitPrice" value="${item.unitPrice}" placeholder="0">
+    </label>
+    <label class="receipt-item-field receipt-item-amount">
+      <span class="visually-hidden">Nominal</span>
+      <input type="number" min="0" step="0.01" inputmode="decimal" data-receipt-field="amount" value="${item.amount}" placeholder="0">
+    </label>
+    <button type="button" class="receipt-item-remove" data-remove-receipt-item aria-label="Hapus ${escapeHtml(item.name || 'baris bon')}">
+      <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+    </button>
+  </article>`;
+}
+
 export function tipsDisclosure(title, tips = []) {
   return `<details class="calculation-tips">
     <summary>

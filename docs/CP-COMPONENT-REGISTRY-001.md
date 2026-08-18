@@ -1,6 +1,6 @@
 # CalPro Component Registry
 
-Version: 4.2.3
+Version: 4.3.0
 
 ## Atoms
 
@@ -19,6 +19,9 @@ Version: 4.2.3
 - `result-metric`: label dan nilai ringkas di dalam result card.
 - `rounding-inline`: pilihan pembulatan Rp500 atau Rp1.000.
 - `cost-item-row`: rincian harga beli, jumlah isi, jumlah dipakai, dan biaya terpakai.
+- `basic-key`: tombol angka, operasi, utilitas, dan hasil Kalkulator Original.
+- `receipt-item-row`: satu baris horizontal berisi nama opsional, qty, harga satuan, nominal, dan hapus.
+- `receipt-history-item`: ringkasan satu bon tersimpan beserta action buka dan hapus.
 
 ## Organisms
 
@@ -30,12 +33,16 @@ Version: 4.2.3
 - `mobile-navigation`: lima menu dengan CTA Hitung berbentuk diamond.
 - `production-cost-section`: kelompok rincian bahan baku atau kemasan dengan total biaya batch.
 - `support-cost-card`: kalkulator bantuan tenaga kerja dan overhead untuk satu batch.
+- `basic-calculator`: display, keypad, keyboard handler, dan action Kalkulator Original.
+- `receipt-entry`: daftar item, bantuan rumus otomatis, total, dan action simpan bon.
+- `receipt-history`: daftar riwayat bon lokal yang dapat dibuka kembali.
 
 ## Templates
 
 - `calculator-panel`: header kalkulator, input, result card, dan action simpan.
 - `selling-layout`: mode HPP, input harga, hasil, pembulatan, dan estimasi.
 - `production-hpp-layout`: estimasi produksi, rincian biaya batch, biaya pendukung, dan hasil per produk.
+- `receipt-layout`: segmented control Buat Bon/Riwayat dengan satu sumber state dan penyimpanan lokal.
 
 ## Aturan penggunaan
 

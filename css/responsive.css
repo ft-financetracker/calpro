@@ -6,6 +6,9 @@
   .hpp-fields { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .result-card-main { grid-template-columns: minmax(190px, .9fr) minmax(390px, 1.6fr); }
   .cost-item { grid-template-columns: minmax(140px, 1.25fr) repeat(3, minmax(84px, .75fr)) minmax(105px, .85fr) 34px; }
+  .receipt-item-header,
+  .receipt-item { grid-template-columns: minmax(120px, 1.2fr) minmax(58px, .42fr) minmax(100px, .8fr) minmax(110px, .9fr) 34px; }
+  .receipt-history-item { grid-template-columns: minmax(145px, 1fr) minmax(115px, .7fr) 62px auto; gap: 9px; }
 }
 
 @media (max-width: 800px) {
@@ -26,6 +29,9 @@
   .cost-item-remove { position: absolute; top: 9px; right: 9px; }
   .cost-label-desktop { display: none; }
   .support-cost-grid { grid-template-columns: 1fr; }
+  .basic-calculator-layout { grid-template-columns: 1fr; }
+  .basic-calculator-note { grid-template-columns: 30px minmax(0, 1fr); padding: 12px; }
+  .basic-calculator-note > .material-symbols-rounded { width: 30px; height: 30px; font-size: 18px; }
 }
 
 /* MOBILE */
@@ -129,6 +135,50 @@
   .field-info-button { width: 17px; height: 17px; }
   .field-info-button .material-symbols-rounded { font-size: 13px; }
   .support-cost-card .number-field input { font-size: 12px; }
+
+  .basic-calculator { width: 100%; padding: 9px; border-radius: 13px; }
+  .basic-display { min-height: 78px; padding: 12px; border-radius: 10px; }
+  .basic-display small { font-size: 9px; }
+  .basic-display output { font-size: 31px; }
+  .basic-keypad { gap: 5px; }
+  .basic-key { min-height: 46px; border-radius: 9px; font-size: 15px; }
+  .basic-backspace { min-height: 32px; margin-top: 5px; font-size: 9px; }
+  .basic-calculator-note { display: none; }
+
+  .receipt-entry-toolbar { align-items: stretch; flex-direction: column; gap: 8px; }
+  .receipt-entry-toolbar h3 { font-size: 15px; }
+  .receipt-entry-toolbar > div:last-child { display: grid; grid-template-columns: 1fr 1fr; }
+  .receipt-entry-toolbar .button { min-width: 0; padding-inline: 7px; font-size: 9px; }
+  .receipt-item-header,
+  .receipt-item { grid-template-columns: minmax(50px, 1fr) 36px minmax(55px, .82fr) minmax(62px, .95fr) 28px; gap: 4px; }
+  .receipt-item-header { padding: 0 5px 4px; font-size: 7px; }
+  .receipt-item-header span:nth-child(3) { font-size: 0; }
+  .receipt-item-header span:nth-child(3)::after { content: "Harga"; font-size: 7px; }
+  .receipt-item { padding: 5px; border-radius: 8px; }
+  .receipt-item-field input { height: 34px; padding-inline: 4px; border-radius: 6px; font-size: 9px; }
+  .receipt-item-name input { font-size: 9px; }
+  .receipt-item-remove { width: 28px; height: 34px; border-radius: 6px; }
+  .receipt-item-remove .material-symbols-rounded { font-size: 15px; }
+  .receipt-formula-note { padding: 7px; align-items: flex-start; font-size: 8px; line-height: 1.45; }
+  .receipt-result-card .result-card-main { min-height: 0; display: block; }
+  .receipt-result-card .result-metrics { grid-template-columns: 1fr 1fr; }
+  .receipt-result-card .result-metric { border-bottom: 0; }
+  .receipt-result-toolbar > span { display: none; }
+  .receipt-result-toolbar .button { width: 100%; }
+  .receipt-history-heading { align-items: flex-start; }
+  .receipt-history-heading h3 { font-size: 15px; }
+  .receipt-history-heading small { display: none; }
+  .receipt-history-item { min-height: 56px; padding: 6px; grid-template-columns: minmax(0, 1fr) minmax(70px, auto) auto; gap: 6px; }
+  .receipt-history-main small { font-size: 7px; }
+  .receipt-history-main b { font-size: 9px; }
+  .receipt-history-stat small { font-size: 7px; }
+  .receipt-history-stat strong { font-size: 10px; }
+  .receipt-history-stat.is-quantity { display: none; }
+  .receipt-history-actions { gap: 4px; }
+  .receipt-history-actions .button { width: 31px; min-height: 31px; padding: 0; }
+  .receipt-history-actions .button span:last-child { display: none; }
+  .receipt-history-delete { width: 31px; height: 31px; }
+  .receipt-history-empty { min-height: 220px; }
 
   .result-card { border-radius: 13px; }
   .result-card-main { padding: 14px; display: block; }

@@ -70,3 +70,26 @@ test('kolom biaya pendukung menyediakan tombol info rumus yang kontekstual', () 
   assert.match(appJs, /productionFuelCost/);
   assert.match(componentsCss, /\.field-info-button/);
 });
+
+test('dua modul baru ditambahkan tanpa memisahkan mode Harga dan HPP', () => {
+  assert.match(appJs, /code: 'BASIC_CALCULATOR'/);
+  assert.match(appJs, /code: 'RECEIPT'/);
+  assert.match(appJs, />Buat Bon</);
+  assert.match(appJs, />Riwayat</);
+  assert.match(appJs, /data-selling-mode="PRODUCTION"/);
+});
+
+test('item bon tetap satu kartu satu baris dan dipadatkan pada mobile', () => {
+  assert.match(templatesJs, /class="receipt-item"/);
+  assert.match(componentsCss, /\.receipt-item\s*\{[^}]*grid-template-columns:/s);
+  assert.match(responsiveCss, /@media \(max-width: 640px\)[\s\S]*\.receipt-item\s*\{[^}]*grid-template-columns:/);
+  assert.doesNotMatch(responsiveCss, /\.receipt-item\s*\{[^}]*overflow-x:\s*auto/s);
+});
+
+test('bon mendukung kalkulasi terbalik dan riwayat lokal', () => {
+  assert.match(appJs, /Harga satuan kosong \+ Nominal diisi/);
+  assert.match(appJs, /function saveReceiptRecord\(/);
+  assert.match(appJs, /calculatorCode === 'RECEIPT'/);
+  assert.match(appJs, /data-load-receipt/);
+  assert.match(appJs, /data-delete-receipt/);
+});

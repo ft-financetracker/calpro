@@ -20,6 +20,7 @@ button, input { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; }
 img { display: block; max-width: 100%; }
+.visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
 
 h1, h2, h3, p { margin-top: 0; }
 h1, h2, h3 { font-family: var(--font-heading); }
