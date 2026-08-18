@@ -31,3 +31,10 @@ test('Beranda selalu menuju posisi paling atas', () => {
   assert.match(appJs, /a\[href="#beranda"\]/);
   assert.match(appJs, /window\.scrollTo\(\{\s*top:\s*0/);
 });
+
+test('HPP Produksi menjadi modul terpisah dan tidak mengganti Harga & HPP', () => {
+  assert.match(appJs, /code: 'PRODUCTION_HPP'/);
+  assert.match(appJs, /code: 'SELLING_PRICE'/);
+  assert.match(appJs, /Estimasi jumlah produk/);
+  assert.match(appJs, /Gunakan sebagai HPP/);
+});

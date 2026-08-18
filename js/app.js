@@ -4,8 +4,9 @@ import { calculateCashDeposit, CASH_DENOMINATIONS } from './calculators/cash.js'
 import { calculateDiscount } from './calculators/discount.js';
 import { calculateHpp } from './calculators/hpp.js';
 import { calculateMarketplaceFee } from './calculators/marketplace.js';
+import { calculateProductionHpp } from './calculators/production-hpp.js';
 import { calculateSellingPrice } from './calculators/selling-price.js';
-import { calculatorHeader, numberField, resultMetric } from './components/templates.js';
+import { calculatorHeader, costItemRow, numberField, resultMetric } from './components/templates.js';
 
 const rupiah = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
 const percent = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -15,6 +16,7 @@ const $$ = selector => [...document.querySelectorAll(selector)];
 const catalog = [
   { code: 'CASH_DEPOSIT', title: 'Setoran Kas', desc: 'Pecahan, total, dan selisih kas', icon: 'payments' },
   { code: 'SELLING_PRICE', title: 'Harga & HPP', desc: 'Susun HPP dan rekomendasi harga', icon: 'sell' },
+  { code: 'PRODUCTION_HPP', title: 'HPP Produksi', desc: 'Biaya produksi dan HPP per produk', icon: 'inventory_2' },
   { code: 'DISCOUNT', title: 'Diskon', desc: 'Harga akhir dan nilai hemat', icon: 'percent' },
   { code: 'MARKETPLACE_FEE', title: 'Biaya Marketplace', desc: 'Potongan dan penerimaan bersih', icon: 'storefront' }
 ];
@@ -33,6 +35,13 @@ const guides = {
     formula: 'HPP = Bahan + Kemasan + Tenaga kerja + Overhead\nTotal modal = HPP + Biaya lainnya\nHarga teoritis = Total modal ÷ (1 − Target margin)\nMargin aktual = (Harga rekomendasi − Total modal) ÷ Harga rekomendasi',
     note: 'Margin dihitung dari harga jual, bukan markup dari HPP. Harga rekomendasi dibulatkan ke atas agar target margin tidak turun.',
     example: 'HPP Rp4.000, biaya lain Rp0, dan margin 27% menghasilkan harga teoritis Rp5.479. Pembulatan Rp500 memberi rekomendasi Rp5.500 dan margin aktual 27,27%.'
+  },
+  PRODUCTION_HPP: {
+    purpose: 'Menghitung HPP estimasi per produk dari seluruh biaya dalam satu kali produksi. Jumlah produk ditentukan sendiri oleh pengguna.',
+    steps: ['Isi estimasi jumlah produk yang akan dihasilkan.', 'Tambahkan rincian bahan baku dan kemasan berdasarkan pembelian serta pemakaian.', 'Isi total tenaga kerja dan overhead satu kali produksi.', 'Periksa HPP estimasi per produk atau gunakan hasilnya di modul Harga & HPP.'],
+    formula: 'Biaya terpakai = Harga beli ÷ Jumlah isi × Jumlah dipakai\nTotal produksi = Bahan + Kemasan + Tenaga kerja + Overhead\nHPP per produk = Total produksi ÷ Estimasi jumlah produk',
+    note: 'Jumlah isi dan jumlah dipakai harus menggunakan satuan yang sama, misalnya lembar dengan lembar, gram dengan gram, atau ml dengan ml.',
+    example: 'Kulit lumpia Rp12.000 isi 20 dan dipakai 20 menghasilkan biaya Rp12.000. Jika seluruh biaya produksi Rp62.000 untuk estimasi 20 produk, HPP-nya Rp3.100 per produk.'
   },
   DISCOUNT: {
     purpose: 'Menghitung harga yang dibayar pelanggan setelah diskon dari Harga Jual Awal—bukan dari HPP produk.',
@@ -58,6 +67,19 @@ const state = {
     rounding: 500,
     quick: { hpp: 4000, otherCost: 0, targetMargin: 27 },
     builder: { materialCost: 2500, packagingCost: 500, laborCost: 500, overheadCost: 500, otherCost: 0, targetMargin: 27 }
+  },
+  production: {
+    estimatedQuantity: 20,
+    materials: [
+      { id: 1, name: 'Kulit lumpia', purchasePrice: 12000, purchaseQuantity: 20, usedQuantity: 20 },
+      { id: 2, name: 'Bahan isian', purchasePrice: 30000, purchaseQuantity: 1000, usedQuantity: 800 }
+    ],
+    packaging: [
+      { id: 3, name: 'Kemasan', purchasePrice: 25000, purchaseQuantity: 50, usedQuantity: 20 }
+    ],
+    laborCost: 10000,
+    overheadCost: 6000,
+    nextItemId: 4
   }
 };
 
@@ -110,6 +132,7 @@ function bindInputCalculation(callback) {
 function renderCalculator() {
   if (state.active === 'CASH_DEPOSIT') return renderCash();
   if (state.active === 'SELLING_PRICE') return renderSellingPrice();
+  if (state.active === 'PRODUCTION_HPP') return renderProductionHpp();
   if (state.active === 'DISCOUNT') return renderDiscount();
   return renderMarketplace();
 }
@@ -307,6 +330,163 @@ function calculateSelling() {
     },
     title: 'Harga & HPP'
   };
+}
+
+function productionCostGroup(group, title, description, items, totalId) {
+  return `<section class="production-cost-section" data-cost-group="${group}">
+    <header class="production-section-header">
+      <div><h3>${title}</h3><p>${description}</p></div>
+      <button type="button" class="button button-secondary production-add-button" data-add-cost="${group}">
+        <span class="material-symbols-rounded" aria-hidden="true">add</span>Tambah
+      </button>
+    </header>
+    <div class="cost-item-list">
+      ${items.length ? items.map(item => costItemRow(group, item)).join('') : '<p class="cost-empty-state">Belum ada rincian biaya. Tekan Tambah untuk membuat baris baru.</p>'}
+    </div>
+    <footer class="production-section-total"><span>Total ${title.toLowerCase()}</span><b id="${totalId}">Rp0</b></footer>
+  </section>`;
+}
+
+function productionResultTemplate() {
+  return `<section class="result-card production-result-card" aria-live="polite">
+    <div class="result-card-main">
+      <div class="result-primary"><span>HPP estimasi per produk</span><strong id="productionHppValue"></strong><small>Total biaya produksi dibagi estimasi jumlah produk</small></div>
+      <div class="result-metrics">
+        ${resultMetric('Bahan per produk', 'materialPerProductValue')}
+        ${resultMetric('Kemasan per produk', 'packagingPerProductValue')}
+        ${resultMetric('Tenaga kerja per produk', 'laborPerProductValue')}
+        ${resultMetric('Overhead per produk', 'overheadPerProductValue')}
+      </div>
+    </div>
+    <div class="result-toolbar production-result-toolbar">
+      <div class="production-result-facts">
+        <span><small>Total biaya produksi</small><b id="productionTotalValue"></b></span>
+        <span><small>Estimasi hasil</small><b id="productionQuantityValue"></b></span>
+      </div>
+      <button type="button" class="button button-primary" id="useProductionHpp">
+        Gunakan sebagai HPP<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+      </button>
+    </div>
+  </section>`;
+}
+
+function renderProductionHpp() {
+  const values = state.production;
+  $('#calculatorPanel').innerHTML = `${calculatorHeader('HPP Produksi', 'BIAYA PRODUKSI PER UNIT')}
+    <p class="calculator-description">Masukkan estimasi jumlah produk dan biaya yang digunakan dalam satu kali produksi.</p>
+    <section class="production-estimate-card">
+      <div class="pane-heading"><span>DASAR PERHITUNGAN</span><h3>Estimasi jumlah produk</h3><p>Jumlah ini ditentukan sendiri oleh pengguna dan menjadi pembagi seluruh biaya produksi.</p></div>
+      <div>
+        ${numberField('estimatedQuantity', 'Estimasi jumlah produk', values.estimatedQuantity, 'produk', { min: 1, step: 1 })}
+        <p class="production-quantity-note" id="productionQuantityNote">Gunakan estimasi yang paling realistis.</p>
+      </div>
+    </section>
+    <div class="production-cost-list">
+      ${productionCostGroup('materials', 'Bahan baku', 'Harga beli, jumlah isi, dan jumlah yang dipakai.', values.materials, 'materialBatchValue')}
+      ${productionCostGroup('packaging', 'Kemasan', 'Gunakan satuan pembelian dan pemakaian yang sama.', values.packaging, 'packagingBatchValue')}
+    </div>
+    <section class="production-support-costs">
+      <div class="pane-heading"><span>BIAYA PENDUKUNG</span><h3>Biaya satu kali produksi</h3><p>Masukkan total biaya batch, bukan biaya per produk.</p></div>
+      <div class="field-grid two-columns">
+        ${numberField('productionLaborCost', 'Tenaga kerja', values.laborCost)}
+        ${numberField('productionOverheadCost', 'Overhead', values.overheadCost)}
+      </div>
+    </section>
+    ${productionResultTemplate()}`;
+
+  $$('[data-add-cost]').forEach(button => {
+    button.addEventListener('click', () => {
+      readProductionState();
+      const group = button.dataset.addCost;
+      state.production[group].push({ id: state.production.nextItemId++, name: '', purchasePrice: 0, purchaseQuantity: 1, usedQuantity: 0 });
+      renderProductionHpp();
+    });
+  });
+  $$('[data-remove-cost]').forEach(button => {
+    button.addEventListener('click', () => {
+      const item = button.closest('[data-cost-item]');
+      const group = button.closest('[data-cost-group]').dataset.costGroup;
+      readProductionState();
+      state.production[group] = state.production[group].filter(entry => entry.id !== Number(item.dataset.itemId));
+      renderProductionHpp();
+    });
+  });
+  bindInputCalculation(calculateProduction);
+  bindInfoButtons();
+  $('#useProductionHpp').addEventListener('click', useProductionHpp);
+  calculateProduction();
+}
+
+function readProductionCostItems(group) {
+  return $$(`[data-cost-group="${group}"] [data-cost-item]`).map(item => ({
+    id: Number(item.dataset.itemId),
+    name: item.querySelector('[data-cost-field="name"]').value,
+    purchasePrice: Number(item.querySelector('[data-cost-field="purchasePrice"]').value) || 0,
+    purchaseQuantity: Number(item.querySelector('[data-cost-field="purchaseQuantity"]').value) || 0,
+    usedQuantity: Number(item.querySelector('[data-cost-field="usedQuantity"]').value) || 0
+  }));
+}
+
+function readProductionState() {
+  state.production.estimatedQuantity = Number($('#estimatedQuantity')?.value) || 0;
+  state.production.materials = readProductionCostItems('materials');
+  state.production.packaging = readProductionCostItems('packaging');
+  state.production.laborCost = Number($('#productionLaborCost')?.value) || 0;
+  state.production.overheadCost = Number($('#productionOverheadCost')?.value) || 0;
+  return state.production;
+}
+
+function calculateProduction() {
+  const result = calculateProductionHpp(readProductionState());
+  [...result.materials.map(item => ['materials', item]), ...result.packaging.map(item => ['packaging', item])].forEach(([group, item]) => {
+    setText(`[data-cost-output="${group}-${item.id}"]`, rupiah.format(Math.round(item.usedCost)));
+  });
+  setText('#materialBatchValue', rupiah.format(Math.round(result.materialCost)));
+  setText('#packagingBatchValue', rupiah.format(Math.round(result.packagingCost)));
+  setText('#productionHppValue', rupiah.format(Math.ceil(result.hppPerProduct)));
+  setText('#materialPerProductValue', rupiah.format(Math.ceil(result.materialCostPerProduct)));
+  setText('#packagingPerProductValue', rupiah.format(Math.ceil(result.packagingCostPerProduct)));
+  setText('#laborPerProductValue', rupiah.format(Math.ceil(result.laborCostPerProduct)));
+  setText('#overheadPerProductValue', rupiah.format(Math.ceil(result.overheadCostPerProduct)));
+  setText('#productionTotalValue', rupiah.format(Math.round(result.totalProductionCost)));
+  setText('#productionQuantityValue', `${result.estimatedQuantity} produk`);
+
+  const quantityInput = $('#estimatedQuantity');
+  const quantityValid = result.estimatedQuantity > 0;
+  quantityInput.setAttribute('aria-invalid', String(!quantityValid));
+  setText('#productionQuantityNote', quantityValid ? 'Gunakan estimasi yang paling realistis.' : 'Estimasi jumlah produk wajib lebih dari 0.');
+  $('#productionQuantityNote').classList.toggle('is-error', !quantityValid);
+  $('#useProductionHpp').disabled = !quantityValid || result.totalProductionCost <= 0;
+
+  state.currentResult = {
+    input: {
+      estimatedQuantity: result.estimatedQuantity,
+      materials: result.materials,
+      packaging: result.packaging,
+      laborCost: result.laborCost,
+      overheadCost: result.overheadCost
+    },
+    result: {
+      materialCost: result.materialCost,
+      packagingCost: result.packagingCost,
+      totalProductionCost: result.totalProductionCost,
+      materialCostPerProduct: result.materialCostPerProduct,
+      packagingCostPerProduct: result.packagingCostPerProduct,
+      laborCostPerProduct: result.laborCostPerProduct,
+      overheadCostPerProduct: result.overheadCostPerProduct,
+      hppPerProduct: result.hppPerProduct
+    },
+    title: 'HPP Produksi'
+  };
+}
+
+function useProductionHpp() {
+  const hpp = Math.ceil(state.currentResult.result?.hppPerProduct || 0);
+  if (!hpp) return;
+  state.selling.quick.hpp = hpp;
+  state.selling.mode = 'QUICK';
+  selectCalculator('SELLING_PRICE', true);
+  toast(`HPP ${rupiah.format(hpp)} dipindahkan ke Harga & HPP`);
 }
 
 function standardResultCard({ label, valueId, helper, metrics }) {

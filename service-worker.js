@@ -1,4 +1,4 @@
-const CACHE = 'calpro-shell-v4-1-1';
+const CACHE = 'calpro-shell-v4-2-0';
 const ASSETS = [
   './',
   './index.html',
@@ -14,6 +14,7 @@ const ASSETS = [
   './js/calculators/discount.js',
   './js/calculators/hpp.js',
   './js/calculators/marketplace.js',
+  './js/calculators/production-hpp.js',
   './js/calculators/selling-price.js',
   './manifest.webmanifest',
   './assets/icons/calpro-icon-192.png',

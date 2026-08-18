@@ -1,6 +1,6 @@
 # CalPro Component Registry
 
-Version: 4.1.1
+Version: 4.2.0
 
 ## Atoms
 
@@ -16,6 +16,7 @@ Version: 4.1.1
 - `stepper`: pengaturan jumlah pecahan kas.
 - `result-metric`: label dan nilai ringkas di dalam result card.
 - `rounding-inline`: pilihan pembulatan Rp500 atau Rp1.000.
+- `cost-item-row`: rincian harga beli, jumlah isi, jumlah dipakai, dan biaya terpakai.
 
 ## Organisms
 
@@ -25,11 +26,13 @@ Version: 4.1.1
 - `result-card`: hasil utama, metrik, dan action terkait.
 - `modal-dialog`: panduan kalkulator dan Tentang CalPro.
 - `mobile-navigation`: lima menu dengan CTA Hitung berbentuk diamond.
+- `production-cost-section`: kelompok rincian bahan baku atau kemasan dengan total biaya batch.
 
 ## Templates
 
 - `calculator-panel`: header kalkulator, input, result card, dan action simpan.
 - `selling-layout`: mode HPP, input harga, hasil, pembulatan, dan estimasi.
+- `production-hpp-layout`: estimasi produksi, rincian biaya batch, biaya pendukung, dan hasil per produk.
 
 ## Aturan penggunaan
 

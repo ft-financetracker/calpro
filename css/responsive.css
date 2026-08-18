@@ -5,6 +5,7 @@
   .selling-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .hpp-fields { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .result-card-main { grid-template-columns: minmax(190px, .9fr) minmax(390px, 1.6fr); }
+  .cost-item { grid-template-columns: minmax(140px, 1.25fr) repeat(3, minmax(84px, .75fr)) minmax(105px, .85fr) 34px; }
 }
 
 @media (max-width: 800px) {
@@ -16,6 +17,8 @@
   .result-metric:first-child { border-left: 0; }
   .cash-result-card .result-card-main { grid-template-columns: 1fr 1fr auto; }
   .standard-result-card .result-card-main { grid-template-columns: 1.2fr 1fr; }
+  .production-estimate-card,
+  .production-support-costs { grid-template-columns: 1fr; gap: 13px; }
 }
 
 /* MOBILE */
@@ -86,6 +89,28 @@
   .selling-fields, .hpp-fields { gap: 9px; }
   .hpp-total-note { font-size: 10px; }
 
+  .production-estimate-card,
+  .production-support-costs,
+  .production-cost-section { border-radius: 12px; }
+  .production-estimate-card { padding: 13px; }
+  .production-estimate-card .pane-heading h3,
+  .production-support-costs .pane-heading h3 { font-size: 15px; }
+  .production-cost-section { padding: 11px; }
+  .production-section-header { align-items: flex-start; gap: 9px; }
+  .production-section-header h3 { font-size: 13px; }
+  .production-section-header p { font-size: 9px; }
+  .production-add-button { min-height: 34px; padding-inline: 9px; }
+  .cost-item { padding: 9px; grid-template-columns: 1fr 1fr; align-items: end; gap: 7px; }
+  .cost-item-name { grid-column: 1 / -1; padding-right: 39px; }
+  .cost-item-field:nth-of-type(4) { grid-column: auto; }
+  .cost-item-output { grid-column: 1 / -1; }
+  .cost-item-remove { position: absolute; top: 9px; right: 9px; }
+  .cost-item-field input { height: 36px; font-size: 11px; }
+  .cost-item-output { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .cost-item-output > span { margin: 0; }
+  .production-support-costs { padding: 13px; }
+  .production-section-total { justify-content: space-between; }
+
   .result-card { border-radius: 13px; }
   .result-card-main { padding: 14px; display: block; }
   .result-primary > span { font-size: 11px; }
@@ -105,6 +130,8 @@
   .estimate-inline .material-symbols-rounded { display: none; }
   .estimate-inline span { min-width: 0; }
   .estimate-inline b { margin-left: 0; text-align: right; white-space: nowrap; }
+  .production-result-facts { width: 100%; justify-content: space-between; gap: 12px; }
+  .production-result-toolbar .button { width: 100%; }
 
   .standard-result-card { margin-top: 16px; }
   .standard-result-card .result-card-main { min-height: 0; display: block; }
