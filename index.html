@@ -29,6 +29,7 @@
     <nav class="desktop-navigation" aria-label="Navigasi utama">
       <a href="#beranda" class="active">Beranda</a>
       <a href="#kalkulator">Kalkulator</a>
+      <button type="button" data-open-settings>Pengaturan</button>
       <button type="button" data-open-help>Bantuan</button>
       <button type="button" data-open-about>Tentang</button>
     </nav>
@@ -57,11 +58,11 @@
     <section class="catalog" id="kalkulator" aria-labelledby="catalogTitle">
       <header class="section-heading">
         <div><span class="eyebrow">KALKULATOR BISNIS</span><h2 id="catalogTitle">Apa yang ingin Anda hitung?</h2><p>Pilih modul atau gunakan pencarian cepat.</p></div>
-        <small id="resultCount">6 kalkulator ditemukan</small>
+        <div class="section-heading-tools"><small id="resultCount">6 kalkulator ditemukan</small><button type="button" class="quick-settings-button" data-open-settings><span class="material-symbols-rounded" aria-hidden="true">tune</span>Atur menu</button></div>
       </header>
       <label class="search-field">
         <span class="material-symbols-rounded" aria-hidden="true">search</span>
-        <input id="calculatorSearch" type="search" placeholder="Cari setoran, HPP, kalkulator, bon..." autocomplete="off">
+        <input id="calculatorSearch" type="search" placeholder="Cari kas, HPP, diskon, fee, bon..." autocomplete="off">
       </label>
       <div class="calculator-grid" id="calculatorGrid"></div>
     </section>
@@ -97,6 +98,21 @@
     </div>
   </dialog>
 
+  <dialog class="modal-dialog settings-dialog" id="settingsDialog" aria-labelledby="settingsTitle">
+    <header class="dialog-header">
+      <div><span class="dialog-kicker">PENGATURAN CALPRO</span><h2 id="settingsTitle">Atur Menu Cepat</h2></div>
+      <button type="button" class="dialog-close" data-close-dialog aria-label="Tutup pengaturan"><span class="material-symbols-rounded">close</span></button>
+    </header>
+    <div class="dialog-content settings-content">
+      <section class="guide-intro"><span class="material-symbols-rounded" aria-hidden="true">swap_vert</span><div><h3>Susun sesuai kebutuhan</h3><p>Gunakan tombol naik atau turun. Urutan ini diterapkan pada kartu menu dan tab kalkulator, lalu disimpan di perangkat ini.</p></div></section>
+      <ol class="menu-order-list" id="menuOrderList" aria-label="Urutan menu kalkulator"></ol>
+      <footer class="settings-actions">
+        <button type="button" class="button button-secondary" id="resetMenuOrder"><span class="material-symbols-rounded" aria-hidden="true">restart_alt</span>Urutan bawaan</button>
+        <button type="button" class="button button-primary" data-close-dialog><span class="material-symbols-rounded" aria-hidden="true">check</span>Selesai</button>
+      </footer>
+    </div>
+  </dialog>
+
   <dialog class="modal-dialog about-dialog" id="aboutDialog" aria-labelledby="aboutTitle">
     <header class="dialog-header">
       <div><span class="dialog-kicker">TENTANG APLIKASI</span><h2 id="aboutTitle">Finance Tracker | Calculator Pro</h2></div>
@@ -105,7 +121,7 @@
     <div class="dialog-content">
       <section class="about-brand"><img src="assets/icons/calpro-icon-192.png" alt="Logo CalPro"><div><h3>CalPro</h3><p>Kalkulator bisnis pendamping Finance Tracker untuk membantu perhitungan operasional secara cepat, jelas, dan konsisten.</p></div></section>
       <dl class="about-facts">
-        <div><dt>Versi</dt><dd>4.3.0</dd></div>
+        <div><dt>Versi</dt><dd>4.4.0</dd></div>
         <div><dt>Parent brand</dt><dd>Finance Tracker</dd></div>
         <div><dt>Penyimpanan</dt><dd>Perangkat &amp; Spreadsheet</dd></div>
         <div><dt>Modul</dt><dd>6 kalkulator</dd></div>

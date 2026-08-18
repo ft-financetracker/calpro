@@ -1,6 +1,6 @@
 # CalPro Component Registry
 
-Version: 4.3.0
+Version: 4.4.0
 
 ## Atoms
 
@@ -19,9 +19,10 @@ Version: 4.3.0
 - `result-metric`: label dan nilai ringkas di dalam result card.
 - `rounding-inline`: pilihan pembulatan Rp500 atau Rp1.000.
 - `cost-item-row`: rincian harga beli, jumlah isi, jumlah dipakai, dan biaya terpakai.
-- `basic-key`: tombol angka, operasi, utilitas, dan hasil Kalkulator Original.
+- `basic-key`: tombol angka, operasi, utilitas, dan hasil Kalkulator Pintar.
 - `receipt-item-row`: satu baris horizontal berisi nama opsional, qty, harga satuan, nominal, dan hapus.
 - `receipt-history-item`: ringkasan satu bon tersimpan beserta action buka dan hapus.
+- `menu-order-item`: nama modul, posisi, serta tombol naik dan turun pada Pengaturan.
 
 ## Organisms
 
@@ -33,9 +34,13 @@ Version: 4.3.0
 - `mobile-navigation`: lima menu dengan CTA Hitung berbentuk diamond.
 - `production-cost-section`: kelompok rincian bahan baku atau kemasan dengan total biaya batch.
 - `support-cost-card`: kalkulator bantuan tenaga kerja dan overhead untuk satu batch.
-- `basic-calculator`: display, keypad, keyboard handler, dan action Kalkulator Original.
+- `basic-calculator`: display, keypad, keyboard handler, dan action Kalkulator Pintar.
+- `basic-memory-bar`: MC, MR, M+, dan M−.
+- `basic-function-bar`: akar, kuadrat, kebalikan, dan hapus angka.
+- `basic-history-panel`: delapan hasil terbaru yang dapat digunakan kembali.
 - `receipt-entry`: daftar item, bantuan rumus otomatis, total, dan action simpan bon.
 - `receipt-history`: daftar riwayat bon lokal yang dapat dibuka kembali.
+- `settings-dialog`: pengaturan urutan Menu Cepat yang persisten di perangkat.
 
 ## Templates
 
@@ -43,6 +48,7 @@ Version: 4.3.0
 - `selling-layout`: mode HPP, input harga, hasil, pembulatan, dan estimasi.
 - `production-hpp-layout`: estimasi produksi, rincian biaya batch, biaya pendukung, dan hasil per produk.
 - `receipt-layout`: segmented control Buat Bon/Riwayat dengan satu sumber state dan penyimpanan lokal.
+- `smart-calculator-layout`: kalkulator, Riwayat Cepat, fungsi memori, dan tips kontekstual.
 
 ## Aturan penggunaan
 

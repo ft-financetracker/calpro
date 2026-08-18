@@ -159,7 +159,11 @@ input:focus-visible {
 .eyebrow { color: var(--cp-blue-700); font-size: 10px; font-weight: 900; letter-spacing: 1.8px; }
 .section-heading h2 { margin: 5px 0 0; font-size: 28px; line-height: 1.18; letter-spacing: -.9px; }
 .section-heading p { margin: 5px 0 0; color: var(--cp-muted); font-size: 13px; }
-.section-heading > small { padding: 7px 10px; border-radius: 999px; color: #556176; background: #e5eaf2; font-size: 10px; }
+.section-heading-tools { display: flex; align-items: center; gap: 7px; }
+.section-heading-tools > small { padding: 7px 10px; border-radius: 999px; color: #556176; background: #e5eaf2; font-size: 10px; white-space: nowrap; }
+.quick-settings-button { min-height: 32px; padding: 0 10px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--cp-line); border-radius: 9px; color: var(--cp-blue-700); background: var(--cp-white); font-size: 10px; font-weight: 800; transition: border-color var(--motion-fast), background var(--motion-fast), transform var(--motion-fast); }
+.quick-settings-button:hover { transform: translateY(-1px); border-color: var(--cp-blue-600); background: var(--cp-blue-100); }
+.quick-settings-button .material-symbols-rounded { font-size: 17px; }
 
 /* WORKSPACE */
 .workspace { margin: 18px 0 54px; padding: 9px; border: 1px solid #d3ddeb; border-radius: var(--radius-xl); background: #e7ecf4; box-shadow: var(--shadow-card); scroll-margin-top: 84px; }

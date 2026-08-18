@@ -75,7 +75,7 @@ test('dua modul baru ditambahkan tanpa memisahkan mode Harga dan HPP', () => {
   assert.match(appJs, /code: 'BASIC_CALCULATOR'/);
   assert.match(appJs, /code: 'RECEIPT'/);
   assert.match(appJs, />Buat Bon</);
-  assert.match(appJs, />Riwayat</);
+  assert.match(appJs, />Riwayat Bon</);
   assert.match(appJs, /data-selling-mode="PRODUCTION"/);
 });
 
@@ -92,4 +92,41 @@ test('bon mendukung kalkulasi terbalik dan riwayat lokal', () => {
   assert.match(appJs, /calculatorCode === 'RECEIPT'/);
   assert.match(appJs, /data-load-receipt/);
   assert.match(appJs, /data-delete-receipt/);
+});
+
+test('nama modul konsisten, jelas, dan tidak mengubah kode permanen', () => {
+  assert.match(appJs, /title: 'Kas & Setoran'/);
+  assert.match(appJs, /title: 'Harga & HPP'/);
+  assert.match(appJs, /title: 'Kalkulator Diskon'/);
+  assert.match(appJs, /title: 'Fee Marketplace'/);
+  assert.match(appJs, /title: 'Kalkulator Pintar'/);
+  assert.match(appJs, /title: 'Bon & Catatan'/);
+});
+
+test('Kalkulator Pintar memiliki memori, fungsi cepat, riwayat, dan tips', () => {
+  assert.match(appJs, /data-basic-memory="\$\{key\.action\}"/);
+  assert.match(appJs, /data-basic-unary="\$\{key\.action\}"/);
+  assert.match(appJs, /RIWAYAT CEPAT/);
+  assert.match(appJs, /Trik Kalkulator Pintar/);
+  assert.match(appJs, /calculateContextualPercent/);
+  assert.match(componentsCss, /\.basic-memory-bar/);
+  assert.match(componentsCss, /\.basic-history-panel/);
+});
+
+test('Bon dan Catatan menyediakan nama penyimpanan', () => {
+  assert.match(appJs, /id="receiptName"/);
+  assert.match(appJs, /receiptName: state\.receipt\.name/);
+  assert.match(appJs, /function automaticReceiptName\(/);
+  assert.match(appJs, /record\.input\?\.receiptName/);
+  assert.match(componentsCss, /\.receipt-name-field/);
+});
+
+test('Pengaturan menyimpan dan menerapkan urutan menu cepat', () => {
+  assert.match(html, /id="settingsDialog"/);
+  assert.match(html, /data-open-settings/);
+  assert.match(appJs, /catalogOrderKey/);
+  assert.match(appJs, /function orderedCatalog\(/);
+  assert.match(appJs, /function saveCatalogOrder\(/);
+  assert.match(appJs, /data-move-menu/);
+  assert.match(componentsCss, /\.menu-order-list/);
 });

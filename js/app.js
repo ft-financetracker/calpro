@@ -1,6 +1,6 @@
 import { CONFIG } from './config.js';
 import { saveRemote } from './api.js';
-import { calculateBasicOperation } from './calculators/basic.js';
+import { calculateBasicOperation, calculateBasicUnary, calculateContextualPercent } from './calculators/basic.js';
 import { calculateCashDeposit, CASH_DENOMINATIONS } from './calculators/cash.js';
 import { calculateDiscount } from './calculators/discount.js';
 import { calculateHpp } from './calculators/hpp.js';
@@ -14,14 +14,15 @@ const rupiah = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'ID
 const percent = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
+const catalogOrderKey = 'calpro:catalog-order:v1';
 
 const catalog = [
-  { code: 'CASH_DEPOSIT', title: 'Setoran Kas', desc: 'Pecahan, total, dan selisih kas', icon: 'payments' },
-  { code: 'SELLING_PRICE', title: 'Harga & HPP', desc: 'Harga jual, HPP per unit, dan produksi', icon: 'sell' },
-  { code: 'DISCOUNT', title: 'Diskon', desc: 'Harga akhir dan nilai hemat', icon: 'percent' },
-  { code: 'MARKETPLACE_FEE', title: 'Biaya Marketplace', desc: 'Potongan dan penerimaan bersih', icon: 'storefront' },
-  { code: 'BASIC_CALCULATOR', title: 'Kalkulator Original', desc: 'Hitung angka seperti kalkulator biasa', icon: 'calculate' },
-  { code: 'RECEIPT', title: 'Pencatatan / Bon', desc: 'Catat item, simpan bon, dan buka riwayat', icon: 'receipt_long' }
+  { code: 'CASH_DEPOSIT', title: 'Kas & Setoran', desc: 'Hitung pecahan dan periksa selisih kas', icon: 'payments' },
+  { code: 'SELLING_PRICE', title: 'Harga & HPP', desc: 'Hitung HPP, margin, dan harga jual', icon: 'sell' },
+  { code: 'DISCOUNT', title: 'Kalkulator Diskon', desc: 'Hitung harga akhir dan nilai hemat', icon: 'percent' },
+  { code: 'MARKETPLACE_FEE', title: 'Fee Marketplace', desc: 'Hitung potongan dan penerimaan bersih', icon: 'storefront' },
+  { code: 'BASIC_CALCULATOR', title: 'Kalkulator Pintar', desc: 'Hitung umum, memori, persen, dan riwayat', icon: 'calculate' },
+  { code: 'RECEIPT', title: 'Bon & Catatan', desc: 'Beri nama, simpan, dan buka riwayat', icon: 'receipt_long' }
 ];
 
 const guides = {
@@ -47,18 +48,18 @@ const guides = {
     example: 'Harga Rp100.000, layanan 8%, dan biaya tetap Rp1.250 menghasilkan total biaya Rp9.250, penerimaan Rp90.750, dan biaya efektif 9,25%.'
   },
   BASIC_CALCULATOR: {
-    purpose: 'Melakukan perhitungan angka umum seperti kalkulator biasa tanpa rumus bisnis khusus.',
-    steps: ['Masukkan angka pertama.', 'Pilih operasi tambah, kurang, kali, atau bagi.', 'Masukkan angka berikutnya lalu tekan sama dengan.', 'Gunakan persen, tanda positif-negatif, atau hapus bila diperlukan.'],
-    formula: 'Tambah: a + b\nKurang: a − b\nKali: a × b\nBagi: a ÷ b\nPersen: angka ÷ 100',
-    note: 'Pembagian dengan nol akan menampilkan Error. Tekan AC untuk memulai ulang.',
-    example: '125.000 + 75.000 = 200.000. Tombol % mengubah 20 menjadi 0,2.'
+    purpose: 'Melakukan perhitungan umum dengan persen pintar, memori, fungsi cepat, keyboard, dan riwayat hasil.',
+    steps: ['Masukkan angka dan pilih operasi dasar.', 'Gunakan √, x², atau 1/x untuk fungsi cepat.', 'Gunakan M+, M−, MR, dan MC untuk menyimpan angka sementara.', 'Tekan hasil pada Riwayat Cepat untuk menggunakannya kembali.'],
+    formula: 'Tambah: a + b\nPersen kenaikan: a + b%\nAkar: √a\nKuadrat: a²\nKebalikan: 1 ÷ a',
+    note: 'Pada operasi tambah/kurang, tombol % menghitung persentase dari angka pertama. Pembagian dengan nol dan akar bilangan negatif menghasilkan Error.',
+    example: 'Rp250.000 + 15% = Rp287.500. CalPro otomatis membaca 15% sebagai Rp37.500 dari angka pertama.'
   },
   RECEIPT: {
-    purpose: 'Membuat pencatatan atau bon sederhana, menghitung totalnya, lalu menyimpan dan membuka kembali riwayat.',
-    steps: ['Isi nama item bila diperlukan.', 'Masukkan Qty dan Harga Satuan agar Nominal dihitung otomatis.', 'Atau kosongkan Harga Satuan lalu isi Nominal agar harga satuan dihitung otomatis.', 'Tambahkan baris sesuai kebutuhan lalu tekan Simpan Bon.'],
+    purpose: 'Membuat bon atau catatan sederhana dengan nama penyimpanan, total otomatis, dan riwayat yang dapat dibuka kembali.',
+    steps: ['Isi Nama Bon/Catatan agar mudah ditemukan di riwayat.', 'Isi nama item bila diperlukan.', 'Masukkan Qty dan Harga Satuan agar Nominal dihitung otomatis.', 'Atau kosongkan Harga Satuan lalu isi Nominal agar harga satuan dihitung otomatis.', 'Tambahkan baris lalu tekan Simpan Bon.'],
     formula: 'Nominal = Qty × Harga Satuan\nJika Harga Satuan kosong:\nHarga Satuan = Nominal ÷ Qty\nTotal Bon = Σ Nominal',
-    note: 'Nama item bersifat opsional. Riwayat tersimpan di perangkat dan dapat dibuka kembali.',
-    example: 'Qty 5 dengan nominal Rp100.000 dan harga satuan kosong akan menghasilkan harga satuan Rp20.000.'
+    note: 'Nama item bersifat opsional. Jika nama penyimpanan kosong, CalPro membuat nama otomatis berdasarkan tanggal dan waktu.',
+    example: 'Nama “Belanja Dapur”, Qty 5, dan nominal Rp100.000 dengan harga satuan kosong menghasilkan harga satuan Rp20.000.'
   }
 };
 
@@ -178,14 +179,21 @@ const state = {
     firstOperand: null,
     operator: null,
     waitingForOperand: false,
-    expression: ''
+    expression: '',
+    operandLabel: '',
+    memory: 0,
+    history: []
   },
   receipt: {
     mode: 'ENTRY',
+    name: '',
     items: [
       { id: 1, name: '', quantity: 1, unitPrice: '', amount: '', priceSource: 'UNIT_PRICE' }
     ],
     nextItemId: 2
+  },
+  settings: {
+    catalogOrder: readCatalogOrder()
   }
 };
 
@@ -202,11 +210,35 @@ function escapeHtml(value = '') {
     .replaceAll('>', '&gt;');
 }
 
+function readCatalogOrder() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(catalogOrderKey) || '[]');
+    const validCodes = new Set(catalog.map(item => item.code));
+    const validSaved = Array.isArray(saved) ? saved.filter((code, index) => validCodes.has(code) && saved.indexOf(code) === index) : [];
+    return [...validSaved, ...catalog.map(item => item.code).filter(code => !validSaved.includes(code))];
+  } catch {
+    return catalog.map(item => item.code);
+  }
+}
+
+function orderedCatalog() {
+  const position = new Map(state.settings.catalogOrder.map((code, index) => [code, index]));
+  return [...catalog].sort((left, right) => (position.get(left.code) ?? 999) - (position.get(right.code) ?? 999));
+}
+
+function saveCatalogOrder() {
+  try {
+    localStorage.setItem(catalogOrderKey, JSON.stringify(state.settings.catalogOrder));
+  } catch {
+    toast('Urutan berlaku sementara di sesi ini');
+  }
+}
+
 function formatPriceRange(low, high) {
   return low === high ? rupiah.format(low) : `${rupiah.format(low)} – ${rupiah.format(high)}`;
 }
 
-function renderCatalog(items = catalog) {
+function renderCatalog(items = orderedCatalog()) {
   $('#calculatorGrid').innerHTML = items.map(item => `
     <button type="button" class="calculator-card ${item.code === state.active ? 'active' : ''}" data-code="${item.code}" aria-pressed="${item.code === state.active}">
       <span class="material-symbols-rounded" aria-hidden="true">${item.icon}</span>
@@ -218,13 +250,14 @@ function renderCatalog(items = catalog) {
 }
 
 function renderTabs() {
-  $('#calculatorTabs').innerHTML = catalog.map(item => `<button type="button" class="${item.code === state.active ? 'active' : ''}" data-code="${item.code}" aria-pressed="${item.code === state.active}">${item.title}</button>`).join('');
+  $('#calculatorTabs').innerHTML = orderedCatalog().map(item => `<button type="button" class="${item.code === state.active ? 'active' : ''}" data-code="${item.code}" aria-pressed="${item.code === state.active}">${item.title}</button>`).join('');
   $$('#calculatorTabs button').forEach(button => { button.addEventListener('click', () => selectCalculator(button.dataset.code)); });
 }
 
 function filterCatalog(term) {
   const query = term.trim().toLowerCase();
-  return query ? catalog.filter(item => `${item.title} ${item.desc} ${item.code}`.toLowerCase().includes(query)) : catalog;
+  const items = orderedCatalog();
+  return query ? items.filter(item => `${item.title} ${item.desc} ${item.code}`.toLowerCase().includes(query)) : items;
 }
 
 function selectCalculator(code, scroll = false) {
@@ -256,7 +289,7 @@ function renderCalculator() {
 
 function renderCash() {
   const initialQuantities = [10, 4, 5, 0, 0, 0, 0, 0];
-  $('#calculatorPanel').innerHTML = `${calculatorHeader('Kalkulator Setoran', 'KAS & SETORAN', { showReset: true })}
+  $('#calculatorPanel').innerHTML = `${calculatorHeader('Kas & Setoran', 'PECAHAN & SELISIH KAS', { showReset: true })}
     <div class="cash-grid">
       ${CASH_DENOMINATIONS.map((denomination, index) => `<div class="cash-row">
         <b>${rupiah.format(denomination)}</b>
@@ -309,7 +342,7 @@ function calculateCash() {
   state.currentResult = {
     input: { target: result.target, denominations: result.rows.map(({ value, quantity }) => ({ value, quantity })) },
     result: { total: result.total, difference: result.difference },
-    title: 'Setoran Kas'
+    title: 'Kas & Setoran'
   };
 }
 
@@ -712,7 +745,7 @@ function calculateDiscountResult() {
 }
 
 function renderMarketplace() {
-  $('#calculatorPanel').innerHTML = `${calculatorHeader('Biaya Marketplace', 'FEE & PENERIMAAN BERSIH')}
+  $('#calculatorPanel').innerHTML = `${calculatorHeader('Fee Marketplace', 'FEE & PENERIMAAN BERSIH')}
     <p class="calculator-description">Hitung potongan platform agar Anda mengetahui uang bersih yang benar-benar diterima.</p>
     <div class="field-grid">
       ${numberField('sellingPrice', 'Harga jual', 100000)}
@@ -738,7 +771,7 @@ function calculateMarketplaceResult() {
   state.currentResult = {
     input: { sellingPrice: result.sellingPrice, serviceRate: result.serviceRate, fixedCost: result.fixedCost },
     result: { percentageCost: result.percentageCost, totalCost: result.totalCost, netRevenue: result.netRevenue, effectiveRate: result.effectiveRate },
-    title: 'Penerimaan Bersih Marketplace'
+    title: 'Fee Marketplace'
   };
 }
 
@@ -762,7 +795,24 @@ function normalizedBasicResult(value) {
 }
 
 function resetBasicCalculator() {
-  state.basic = { display: '0', firstOperand: null, operator: null, waitingForOperand: false, expression: '' };
+  const { memory, history } = state.basic;
+  state.basic = { display: '0', firstOperand: null, operator: null, waitingForOperand: false, expression: '', operandLabel: '', memory, history };
+}
+
+function smartCalculatorTipsTemplate() {
+  return tipsDisclosure('Trik Kalkulator Pintar', [
+    { title: 'Tambah persentase langsung', description: 'Saat sedang memakai tambah atau kurang, tombol % mengambil persentase dari angka pertama.', formula: '250.000 + 15% = 287.500' },
+    { title: 'Cari persentase kenaikan', description: 'Bandingkan nilai baru terhadap nilai lama untuk mengetahui persentase kenaikannya.', formula: '(Nilai baru − Nilai lama) ÷ Nilai lama × 100' },
+    { title: 'Cari harga sebelum diskon', description: 'Jika hanya mengetahui harga akhir dan persentase diskonnya, balik rumus diskon.', formula: 'Harga awal = Harga akhir ÷ (1 − Diskon)' },
+    { title: 'Hitung margin sebenarnya', description: 'Margin menggunakan harga jual sebagai pembagi, bukan modal.', formula: '(Harga jual − Modal) ÷ Harga jual × 100' },
+    { title: 'Jumlahkan banyak angka dengan memori', description: 'Tekan M+ setelah setiap subtotal. Tekan MR untuk melihat total memori tanpa menulis ulang.', formula: 'Subtotal → M+ → subtotal berikutnya → M+ → MR' },
+    { title: 'Pakai kebalikan untuk alokasi', description: 'Tombol 1/x mengubah pembagi menjadi faktor. Berguna untuk membagi biaya ke jumlah yang sama.', formula: '1 ÷ 8 = 0,125; lalu biaya × 0,125' }
+  ]);
+}
+
+function basicHistoryItemsTemplate() {
+  if (!state.basic.history.length) return '<li class="basic-history-empty">Hasil perhitungan akan muncul di sini.</li>';
+  return state.basic.history.map(item => `<li><button type="button" data-basic-history-value="${item.value}"><small>${escapeHtml(item.expression)}</small><b>${formatBasicDisplay(item.value)}</b></button></li>`).join('');
 }
 
 function renderBasicCalculator() {
@@ -782,33 +832,64 @@ function renderBasicCalculator() {
     { label: '=', action: 'equals', tone: 'equals', aria: 'Sama dengan' }
   ];
 
-  $('#calculatorPanel').innerHTML = `${calculatorHeader('Kalkulator Original', 'KALKULATOR STANDAR')}
+  const memoryKeys = [
+    { label: 'MC', action: 'clear', aria: 'Hapus memori' },
+    { label: 'MR', action: 'recall', aria: 'Panggil nilai memori' },
+    { label: 'M+', action: 'add', aria: 'Tambahkan angka ke memori' },
+    { label: 'M−', action: 'subtract', aria: 'Kurangi angka dari memori' }
+  ];
+  const functionKeys = [
+    { label: '√', action: 'sqrt', aria: 'Akar kuadrat' },
+    { label: 'x²', action: 'square', aria: 'Kuadrat' },
+    { label: '1/x', action: 'reciprocal', aria: 'Kebalikan angka' }
+  ];
+
+  $('#calculatorPanel').innerHTML = `${calculatorHeader('Kalkulator Pintar', 'HITUNG UMUM & FUNGSI CERDAS')}
     <div class="basic-calculator-layout">
-      <section class="basic-calculator" id="basicCalculator" tabindex="0" aria-label="Kalkulator original">
+      <section class="basic-calculator" id="basicCalculator" tabindex="0" aria-label="Kalkulator Pintar">
         <div class="basic-display" aria-live="polite">
-          <small id="basicExpression">${escapeHtml(state.basic.expression || 'Siap menghitung')}</small>
+          <div class="basic-display-meta"><span id="basicMemoryStatus" class="basic-memory-status${state.basic.memory ? ' is-active' : ''}">M</span><small id="basicExpression">${escapeHtml(state.basic.expression || 'Siap menghitung')}</small></div>
           <output id="basicDisplay">${formatBasicDisplay(state.basic.display)}</output>
+        </div>
+        <div class="basic-memory-bar" aria-label="Fungsi memori">
+          ${memoryKeys.map(key => `<button type="button" data-basic-memory="${key.action}" aria-label="${key.aria}">${key.label}</button>`).join('')}
+        </div>
+        <div class="basic-function-bar" aria-label="Fungsi cepat">
+          ${functionKeys.map(key => `<button type="button" data-basic-unary="${key.action}" aria-label="${key.aria}">${key.label}</button>`).join('')}
+          <button type="button" data-basic-action="backspace" aria-label="Hapus angka terakhir"><span class="material-symbols-rounded" aria-hidden="true">backspace</span></button>
         </div>
         <div class="basic-keypad">
           ${keys.map(key => `<button type="button" class="basic-key${key.tone ? ` is-${key.tone}` : ''}${key.wide ? ' is-wide' : ''}"${key.digit !== undefined ? ` data-basic-digit="${key.digit}"` : ''}${key.operator ? ` data-basic-operator="${key.operator}"` : ''}${key.action ? ` data-basic-action="${key.action}"` : ''} aria-label="${key.aria || key.label}">${key.label}</button>`).join('')}
         </div>
-        <button type="button" class="basic-backspace" data-basic-action="backspace"><span class="material-symbols-rounded" aria-hidden="true">backspace</span>Hapus angka terakhir</button>
       </section>
-      <aside class="basic-calculator-note">
-        <span class="material-symbols-rounded" aria-hidden="true">keyboard</span>
-        <div><b>Bisa memakai keyboard</b><p>Gunakan angka, +, −, ×, ÷, Enter, Backspace, dan Escape.</p></div>
+      <aside class="basic-smart-panel">
+        <section class="basic-history-panel">
+          <header><div><span>RIWAYAT CEPAT</span><h3>Hasil terbaru</h3></div><button type="button" id="clearBasicHistory" aria-label="Hapus riwayat Kalkulator Pintar"><span class="material-symbols-rounded" aria-hidden="true">delete_sweep</span></button></header>
+          <ul id="basicHistoryList">${basicHistoryItemsTemplate()}</ul>
+        </section>
+        <div class="basic-calculator-note"><span class="material-symbols-rounded" aria-hidden="true">keyboard</span><div><b>Bisa memakai keyboard</b><p>Gunakan angka, +, −, ×, ÷, Enter, Backspace, dan Escape.</p></div></div>
       </aside>
-    </div>`;
+    </div>
+    ${smartCalculatorTipsTemplate()}`;
 
   $$('[data-basic-digit]').forEach(button => button.addEventListener('click', () => inputBasicDigit(button.dataset.basicDigit)));
   $$('[data-basic-operator]').forEach(button => button.addEventListener('click', () => setBasicOperator(button.dataset.basicOperator)));
   $$('[data-basic-action]').forEach(button => button.addEventListener('click', () => handleBasicAction(button.dataset.basicAction)));
+  $$('[data-basic-memory]').forEach(button => button.addEventListener('click', () => handleBasicMemory(button.dataset.basicMemory)));
+  $$('[data-basic-unary]').forEach(button => button.addEventListener('click', () => handleBasicUnary(button.dataset.basicUnary)));
+  $('#clearBasicHistory').addEventListener('click', () => {
+    state.basic.history = [];
+    renderBasicHistory();
+    toast('Riwayat Kalkulator Pintar dibersihkan');
+  });
   $('#basicCalculator').addEventListener('keydown', handleBasicKeyboard);
   bindInfoButtons();
+  bindBasicHistoryButtons();
   updateBasicDisplay();
 }
 
 function inputBasicDigit(digit) {
+  state.basic.operandLabel = '';
   if (state.basic.display === 'Error' || state.basic.waitingForOperand) {
     state.basic.display = digit;
     state.basic.waitingForOperand = false;
@@ -848,6 +929,7 @@ function setBasicOperator(operator) {
 
   state.basic.operator = operator;
   state.basic.waitingForOperand = true;
+  state.basic.operandLabel = '';
   state.basic.expression = `${formatBasicDisplay(state.basic.firstOperand)} ${basicOperatorSymbols[operator]}`;
   updateBasicDisplay();
 }
@@ -865,7 +947,12 @@ function handleBasicAction(action) {
   } else if (action === 'negate' && state.basic.display !== 'Error') {
     state.basic.display = normalizedBasicResult(-(Number(state.basic.display) || 0));
   } else if (action === 'percent' && state.basic.display !== 'Error') {
-    state.basic.display = normalizedBasicResult((Number(state.basic.display) || 0) / 100);
+    const percentage = Number(state.basic.display) || 0;
+    const result = state.basic.operator && state.basic.firstOperand !== null
+      ? calculateContextualPercent(state.basic.firstOperand, percentage, state.basic.operator)
+      : percentage / 100;
+    state.basic.display = normalizedBasicResult(result);
+    state.basic.operandLabel = `${formatBasicDisplay(percentage)}%`;
     state.basic.waitingForOperand = false;
   } else if (action === 'backspace' && !state.basic.waitingForOperand && state.basic.display !== 'Error') {
     state.basic.display = state.basic.display.length > 1 ? state.basic.display.slice(0, -1) : '0';
@@ -875,13 +962,65 @@ function handleBasicAction(action) {
     const leftOperand = state.basic.firstOperand;
     const operator = state.basic.operator;
     const result = calculateBasicOperation(leftOperand, rightOperand, operator);
-    state.basic.expression = `${formatBasicDisplay(leftOperand)} ${basicOperatorSymbols[operator]} ${formatBasicDisplay(rightOperand)} =`;
+    state.basic.expression = `${formatBasicDisplay(leftOperand)} ${basicOperatorSymbols[operator]} ${state.basic.operandLabel || formatBasicDisplay(rightOperand)} =`;
     state.basic.display = normalizedBasicResult(result);
+    if (state.basic.display !== 'Error') addBasicHistory(state.basic.expression, state.basic.display);
     state.basic.firstOperand = null;
     state.basic.operator = null;
     state.basic.waitingForOperand = true;
+    state.basic.operandLabel = '';
   }
   updateBasicDisplay();
+}
+
+function handleBasicUnary(action) {
+  if (state.basic.display === 'Error') resetBasicCalculator();
+  const input = Number(state.basic.display) || 0;
+  const result = calculateBasicUnary(input, action);
+  const labels = { sqrt: `√(${formatBasicDisplay(input)})`, square: `${formatBasicDisplay(input)}²`, reciprocal: `1 ÷ ${formatBasicDisplay(input)}` };
+  state.basic.expression = `${labels[action]} =`;
+  state.basic.display = normalizedBasicResult(result);
+  state.basic.waitingForOperand = true;
+  state.basic.operandLabel = '';
+  if (state.basic.display !== 'Error') addBasicHistory(state.basic.expression, state.basic.display);
+  updateBasicDisplay();
+}
+
+function handleBasicMemory(action) {
+  const value = state.basic.display === 'Error' ? 0 : Number(state.basic.display) || 0;
+  if (action === 'clear') state.basic.memory = 0;
+  if (action === 'recall') {
+    state.basic.display = normalizedBasicResult(state.basic.memory);
+    state.basic.waitingForOperand = false;
+    state.basic.expression = 'Nilai memori dipanggil';
+  }
+  if (action === 'add') state.basic.memory = calculateBasicOperation(state.basic.memory, value, 'add');
+  if (action === 'subtract') state.basic.memory = calculateBasicOperation(state.basic.memory, value, 'subtract');
+  updateBasicDisplay();
+}
+
+function addBasicHistory(expression, value) {
+  state.basic.history.unshift({ expression, value });
+  state.basic.history = state.basic.history.slice(0, 8);
+  renderBasicHistory();
+}
+
+function renderBasicHistory() {
+  const list = $('#basicHistoryList');
+  if (!list) return;
+  list.innerHTML = basicHistoryItemsTemplate();
+  bindBasicHistoryButtons();
+}
+
+function bindBasicHistoryButtons() {
+  $$('[data-basic-history-value]').forEach(button => {
+    button.addEventListener('click', () => {
+      state.basic.display = button.dataset.basicHistoryValue;
+      state.basic.waitingForOperand = false;
+      state.basic.expression = 'Hasil riwayat digunakan kembali';
+      updateBasicDisplay();
+    });
+  });
 }
 
 function handleBasicKeyboard(event) {
@@ -891,6 +1030,7 @@ function handleBasicKeyboard(event) {
   else if (event.key === '-') setBasicOperator('subtract');
   else if (event.key === '*') setBasicOperator('multiply');
   else if (event.key === '/') setBasicOperator('divide');
+  else if (event.key === '%') handleBasicAction('percent');
   else if (event.key === 'Enter' || event.key === '=') handleBasicAction('equals');
   else if (event.key === 'Backspace') handleBasicAction('backspace');
   else if (event.key === 'Escape') handleBasicAction('clear');
@@ -901,22 +1041,27 @@ function handleBasicKeyboard(event) {
 function updateBasicDisplay() {
   setText('#basicDisplay', formatBasicDisplay(state.basic.display));
   setText('#basicExpression', state.basic.expression || 'Siap menghitung');
+  const memoryStatus = $('#basicMemoryStatus');
+  if (memoryStatus) {
+    memoryStatus.classList.toggle('is-active', state.basic.memory !== 0);
+    memoryStatus.title = state.basic.memory ? `Memori: ${formatBasicDisplay(state.basic.memory)}` : 'Memori kosong';
+  }
   state.currentResult = {
     input: { expression: state.basic.expression || formatBasicDisplay(state.basic.display) },
     result: { value: state.basic.display === 'Error' ? null : Number(state.basic.display) || 0 },
-    title: 'Kalkulator Original'
+    title: 'Kalkulator Pintar'
   };
 }
 
 function receiptModeControl() {
-  return `<div class="segmented-control receipt-mode-control" role="group" aria-label="Mode Pencatatan atau Bon">
+  return `<div class="segmented-control receipt-mode-control" role="group" aria-label="Mode Bon dan Catatan">
     <button type="button" data-receipt-mode="ENTRY" class="${state.receipt.mode === 'ENTRY' ? 'active' : ''}" aria-pressed="${state.receipt.mode === 'ENTRY'}">Buat Bon</button>
-    <button type="button" data-receipt-mode="HISTORY" class="${state.receipt.mode === 'HISTORY' ? 'active' : ''}" aria-pressed="${state.receipt.mode === 'HISTORY'}">Riwayat</button>
+    <button type="button" data-receipt-mode="HISTORY" class="${state.receipt.mode === 'HISTORY' ? 'active' : ''}" aria-pressed="${state.receipt.mode === 'HISTORY'}">Riwayat Bon</button>
   </div>`;
 }
 
 function renderReceipt() {
-  $('#calculatorPanel').innerHTML = `${calculatorHeader('Pencatatan / Bon', 'CATAT, HITUNG & SIMPAN')}
+  $('#calculatorPanel').innerHTML = `${calculatorHeader('Bon & Catatan', 'CATAT, HITUNG & SIMPAN')}
     ${receiptModeControl()}
     <div id="receiptModeContent">${state.receipt.mode === 'ENTRY' ? receiptEntryTemplate() : receiptHistoryTemplate()}</div>`;
 
@@ -935,12 +1080,17 @@ function renderReceipt() {
 function receiptEntryTemplate() {
   return `<section class="receipt-entry">
     <header class="receipt-entry-toolbar">
-      <div><span class="eyebrow">BUAT BON</span><h3>Rincian pencatatan</h3><p>Nama boleh dikosongkan. Setiap kartu adalah satu baris pencatatan.</p></div>
+      <div><span class="eyebrow">BUAT BON</span><h3>Rincian pencatatan</h3><p>Beri nama penyimpanan agar mudah ditemukan kembali.</p></div>
       <div>
         <button type="button" class="button button-secondary" id="resetReceipt"><span class="material-symbols-rounded" aria-hidden="true">restart_alt</span>Reset</button>
         <button type="button" class="button button-secondary" id="addReceiptItem"><span class="material-symbols-rounded" aria-hidden="true">add</span>Tambah baris</button>
       </div>
     </header>
+    <label class="receipt-name-field" for="receiptName">
+      <span class="material-symbols-rounded" aria-hidden="true">edit_note</span>
+      <span><b>Nama Bon/Catatan</b><small>Contoh: Belanja Dapur, Penjualan Sore, atau Pesanan Bu Rina</small></span>
+      <input id="receiptName" type="text" value="${escapeHtml(state.receipt.name)}" placeholder="Tulis nama penyimpanan..." maxlength="80" autocomplete="off">
+    </label>
     <div class="receipt-table" role="table" aria-label="Rincian bon">
       <div class="receipt-item-header" role="row" aria-hidden="true"><span>Nama</span><span>Qty</span><span>Harga satuan</span><span>Nominal</span><span></span></div>
       <div class="receipt-item-list">
@@ -965,6 +1115,7 @@ function receiptEntryTemplate() {
 }
 
 function bindReceiptEntry() {
+  $('#receiptName').addEventListener('input', () => calculateReceiptForm());
   $$('[data-receipt-field]').forEach(input => input.addEventListener('input', event => calculateReceiptForm(event.target)));
   $('#addReceiptItem').addEventListener('click', () => {
     calculateReceiptForm();
@@ -982,6 +1133,7 @@ function bindReceiptEntry() {
     });
   });
   $('#resetReceipt').addEventListener('click', () => {
+    state.receipt.name = '';
     state.receipt.items = [{ id: state.receipt.nextItemId++, name: '', quantity: 1, unitPrice: '', amount: '', priceSource: 'UNIT_PRICE' }];
     renderReceipt();
   });
@@ -998,6 +1150,7 @@ function receiptInputValue(value) {
 function calculateReceiptForm(changedInput = null) {
   const rows = $$('[data-receipt-item]');
   if (!rows.length) return;
+  state.receipt.name = $('#receiptName')?.value.trim() || '';
 
   const rawItems = rows.map(row => {
     const nameInput = row.querySelector('[data-receipt-field="name"]');
@@ -1044,12 +1197,15 @@ function calculateReceiptForm(changedInput = null) {
   setText('#receiptQuantityValue', percent.format(result.totalQuantity));
   $('#saveReceipt').disabled = result.itemCount === 0 || result.totalAmount <= 0;
 
-  const namedItems = result.items.filter(item => item.amount > 0 && item.name).map(item => item.name);
   state.currentResult = {
-    input: { mode: 'ENTRY', items: result.items },
+    input: { mode: 'ENTRY', receiptName: state.receipt.name, items: result.items },
     result: { itemCount: result.itemCount, totalQuantity: result.totalQuantity, totalAmount: result.totalAmount },
-    title: namedItems.length ? `Bon · ${namedItems.slice(0, 2).join(', ')}` : 'Bon'
+    title: state.receipt.name || 'Bon tanpa nama'
   };
+}
+
+function automaticReceiptName() {
+  return `Bon ${new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date())}`;
 }
 
 function saveReceiptRecord() {
@@ -1057,6 +1213,11 @@ function saveReceiptRecord() {
   if (!state.currentResult.result?.totalAmount) {
     toast('Isi minimal satu nominal terlebih dahulu');
     return;
+  }
+  if (!state.receipt.name) {
+    state.receipt.name = automaticReceiptName();
+    $('#receiptName').value = state.receipt.name;
+    calculateReceiptForm();
   }
   saveLocal('Bon tersimpan di riwayat');
   state.receipt.mode = 'HISTORY';
@@ -1066,7 +1227,7 @@ function saveReceiptRecord() {
 function receiptHistoryTemplate() {
   const records = readLocalRecords().filter(record => record.calculatorCode === 'RECEIPT');
   if (!records.length) {
-    return `<section class="receipt-history-empty"><span class="material-symbols-rounded" aria-hidden="true">receipt_long</span><h3>Belum ada bon tersimpan</h3><p>Buat pencatatan terlebih dahulu, lalu tekan Simpan Bon.</p><button type="button" class="button button-primary" data-empty-receipt-entry>Buat Bon</button></section>`;
+    return `<section class="receipt-history-empty"><span class="material-symbols-rounded" aria-hidden="true">receipt_long</span><h3>Belum ada bon tersimpan</h3><p>Buat dan beri nama bon terlebih dahulu, lalu tekan Simpan Bon.</p><button type="button" class="button button-primary" data-empty-receipt-entry>Buat Bon</button></section>`;
   }
 
   return `<section class="receipt-history">
@@ -1075,15 +1236,16 @@ function receiptHistoryTemplate() {
       ${records.map(record => {
         const items = Array.isArray(record.input?.items) ? record.input.items : [];
         const names = items.filter(item => item.name && item.amount > 0).map(item => item.name);
-        const title = names.length ? names.slice(0, 2).join(', ') : 'Bon tanpa nama item';
+        const receiptName = record.input?.receiptName || record.title || 'Bon tanpa nama';
+        const itemSummary = names.length ? names.slice(0, 2).join(', ') : `${Number(record.result?.itemCount) || 0} baris pencatatan`;
         const date = new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(record.createdAt));
         return `<article class="receipt-history-item" data-receipt-record="${escapeHtml(record.calculationId)}">
-          <div class="receipt-history-main"><small>${escapeHtml(date)}</small><b>${escapeHtml(title)}</b></div>
+          <div class="receipt-history-main"><small>${escapeHtml(date)}</small><b>${escapeHtml(receiptName)}</b><em>${escapeHtml(itemSummary)}</em></div>
           <div class="receipt-history-stat"><small>Total</small><strong>${rupiah.format(Math.round(Number(record.result?.totalAmount) || 0))}</strong></div>
           <div class="receipt-history-stat is-quantity"><small>Qty</small><b>${percent.format(Number(record.result?.totalQuantity) || 0)}</b></div>
           <div class="receipt-history-actions">
-            <button type="button" class="button button-secondary" data-load-receipt aria-label="Buka bon ${escapeHtml(title)}"><span class="material-symbols-rounded" aria-hidden="true">edit</span><span>Buka</span></button>
-            <button type="button" class="receipt-history-delete" data-delete-receipt aria-label="Hapus bon ${escapeHtml(title)}"><span class="material-symbols-rounded" aria-hidden="true">delete</span></button>
+            <button type="button" class="button button-secondary" data-load-receipt aria-label="Buka bon ${escapeHtml(receiptName)}"><span class="material-symbols-rounded" aria-hidden="true">edit</span><span>Buka</span></button>
+            <button type="button" class="receipt-history-delete" data-delete-receipt aria-label="Hapus bon ${escapeHtml(receiptName)}"><span class="material-symbols-rounded" aria-hidden="true">delete</span></button>
           </div>
         </article>`;
       }).join('')}
@@ -1101,6 +1263,7 @@ function bindReceiptHistory() {
       const id = button.closest('[data-receipt-record]').dataset.receiptRecord;
       const record = readLocalRecords().find(item => item.calculationId === id);
       if (!record || !Array.isArray(record.input?.items)) return;
+      state.receipt.name = record.input?.receiptName || record.title || '';
       state.receipt.items = record.input.items.map((item, index) => ({ ...item, id: index + 1 }));
       state.receipt.nextItemId = state.receipt.items.length + 1;
       state.receipt.mode = 'ENTRY';
@@ -1141,6 +1304,38 @@ function openInfo() {
   setText('#infoNote', guide.note);
   setText('#infoExample', guide.example);
   $('#infoDialog').showModal();
+}
+
+function renderMenuOrderList() {
+  const items = orderedCatalog();
+  $('#menuOrderList').innerHTML = items.map((item, index) => `<li data-menu-code="${item.code}">
+    <span class="menu-order-position">${index + 1}</span>
+    <span class="material-symbols-rounded menu-order-icon" aria-hidden="true">${item.icon}</span>
+    <span class="menu-order-copy"><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.desc)}</small></span>
+    <span class="menu-order-actions">
+      <button type="button" data-move-menu="up" aria-label="Naikkan ${escapeHtml(item.title)}" ${index === 0 ? 'disabled' : ''}><span class="material-symbols-rounded" aria-hidden="true">keyboard_arrow_up</span></button>
+      <button type="button" data-move-menu="down" aria-label="Turunkan ${escapeHtml(item.title)}" ${index === items.length - 1 ? 'disabled' : ''}><span class="material-symbols-rounded" aria-hidden="true">keyboard_arrow_down</span></button>
+    </span>
+  </li>`).join('');
+
+  $$('[data-move-menu]').forEach(button => {
+    button.addEventListener('click', () => {
+      const code = button.closest('[data-menu-code]').dataset.menuCode;
+      const index = state.settings.catalogOrder.indexOf(code);
+      const targetIndex = button.dataset.moveMenu === 'up' ? index - 1 : index + 1;
+      if (index < 0 || targetIndex < 0 || targetIndex >= state.settings.catalogOrder.length) return;
+      [state.settings.catalogOrder[index], state.settings.catalogOrder[targetIndex]] = [state.settings.catalogOrder[targetIndex], state.settings.catalogOrder[index]];
+      saveCatalogOrder();
+      renderMenuOrderList();
+      renderCatalog(filterCatalog($('#calculatorSearch').value));
+      renderTabs();
+    });
+  });
+}
+
+function openSettings() {
+  renderMenuOrderList();
+  $('#settingsDialog').showModal();
 }
 
 function openAbout() {
@@ -1220,7 +1415,16 @@ function bindGlobalEvents() {
     });
   });
   $$('[data-open-help]').forEach(button => { button.addEventListener('click', openInfo); });
+  $$('[data-open-settings]').forEach(button => { button.addEventListener('click', openSettings); });
   $$('[data-open-about]').forEach(button => { button.addEventListener('click', openAbout); });
+  $('#resetMenuOrder').addEventListener('click', () => {
+    state.settings.catalogOrder = catalog.map(item => item.code);
+    saveCatalogOrder();
+    renderMenuOrderList();
+    renderCatalog(filterCatalog($('#calculatorSearch').value));
+    renderTabs();
+    toast('Urutan menu dikembalikan');
+  });
   $$('[data-close-dialog]').forEach(button => { button.addEventListener('click', () => button.closest('dialog').close()); });
   $$('.modal-dialog').forEach(dialog => { dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); }); });
   $('#mobileCalculate').addEventListener('click', () => {

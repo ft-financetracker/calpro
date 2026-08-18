@@ -30,6 +30,7 @@
   .cost-label-desktop { display: none; }
   .support-cost-grid { grid-template-columns: 1fr; }
   .basic-calculator-layout { grid-template-columns: 1fr; }
+  .basic-smart-panel { grid-template-columns: minmax(0, 1fr) minmax(220px, .55fr); grid-template-rows: auto; align-items: start; }
   .basic-calculator-note { grid-template-columns: 30px minmax(0, 1fr); padding: 12px; }
   .basic-calculator-note > .material-symbols-rounded { width: 30px; height: 30px; font-size: 18px; }
 }
@@ -61,7 +62,9 @@
   .section-heading { align-items: flex-start; }
   .section-heading h2 { font-size: 22px; letter-spacing: -.55px; }
   .section-heading p { font-size: 11px; }
-  .section-heading > small { display: none; }
+  .section-heading-tools > small { display: none; }
+  .quick-settings-button { width: 34px; min-height: 34px; padding: 0; justify-content: center; font-size: 0; }
+  .quick-settings-button .material-symbols-rounded { font-size: 18px; }
   .eyebrow { font-size: 9px; }
   .search-field { height: 47px; padding-inline: 12px; border-radius: 11px; }
   .search-field input { font-size: 12px; }
@@ -140,15 +143,27 @@
   .basic-display { min-height: 78px; padding: 12px; border-radius: 10px; }
   .basic-display small { font-size: 9px; }
   .basic-display output { font-size: 31px; }
+  .basic-memory-bar,
+  .basic-function-bar { gap: 4px; }
+  .basic-memory-bar button,
+  .basic-function-bar button { min-height: 31px; border-radius: 7px; font-size: 9px; }
+  .basic-function-bar button { font-size: 11px; }
   .basic-keypad { gap: 5px; }
   .basic-key { min-height: 46px; border-radius: 9px; font-size: 15px; }
-  .basic-backspace { min-height: 32px; margin-top: 5px; font-size: 9px; }
+  .basic-smart-panel { display: block; }
+  .basic-history-panel { margin-top: 1px; padding: 10px; border-radius: 11px; }
+  .basic-history-panel ul { max-height: 174px; }
+  .basic-history-panel li > button { min-height: 42px; padding: 6px 7px; }
   .basic-calculator-note { display: none; }
 
   .receipt-entry-toolbar { align-items: stretch; flex-direction: column; gap: 8px; }
   .receipt-entry-toolbar h3 { font-size: 15px; }
   .receipt-entry-toolbar > div:last-child { display: grid; grid-template-columns: 1fr 1fr; }
   .receipt-entry-toolbar .button { min-width: 0; padding-inline: 7px; font-size: 9px; }
+  .receipt-name-field { padding: 7px; grid-template-columns: 27px minmax(0, 1fr); gap: 7px; }
+  .receipt-name-field > .material-symbols-rounded { width: 27px; height: 27px; font-size: 16px; }
+  .receipt-name-field small { display: none; }
+  .receipt-name-field input { height: 36px; grid-column: 1 / -1; font-size: 10px; }
   .receipt-item-header,
   .receipt-item { grid-template-columns: minmax(50px, 1fr) 36px minmax(55px, .82fr) minmax(62px, .95fr) 28px; gap: 4px; }
   .receipt-item-header { padding: 0 5px 4px; font-size: 7px; }
@@ -171,6 +186,7 @@
   .receipt-history-item { min-height: 56px; padding: 6px; grid-template-columns: minmax(0, 1fr) minmax(70px, auto) auto; gap: 6px; }
   .receipt-history-main small { font-size: 7px; }
   .receipt-history-main b { font-size: 9px; }
+  .receipt-history-main em { font-size: 7px; }
   .receipt-history-stat small { font-size: 7px; }
   .receipt-history-stat strong { font-size: 10px; }
   .receipt-history-stat.is-quantity { display: none; }
@@ -253,6 +269,14 @@
   .dialog-header h2 { font-size: 18px; }
   .dialog-content { padding: 14px; }
   .dialog-content > section { padding: 13px; }
+  .menu-order-list li,
+  .menu-order-list li + li { min-height: 52px; padding: 6px; grid-template-columns: 22px 30px minmax(0, 1fr) auto; gap: 6px; }
+  .menu-order-position { width: 22px; height: 22px; font-size: 8px; }
+  .menu-order-icon { width: 30px; height: 30px; font-size: 16px; }
+  .menu-order-copy small { display: none; }
+  .menu-order-actions button { width: 29px; height: 29px; }
+  .settings-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .settings-actions .button { min-width: 0; padding-inline: 7px; font-size: 9px; }
   .about-brand { grid-template-columns: 58px 1fr !important; }
   .about-brand img { width: 58px; height: 58px; border-radius: 15px; }
   .about-facts { grid-template-columns: 1fr; }
