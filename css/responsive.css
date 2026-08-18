@@ -75,6 +75,10 @@
   .number-field input { font-size: 16px; }
   .segmented-control { margin-bottom: 13px; }
   .segmented-control button { min-height: 36px; font-size: 11px; }
+  .selling-mode-control button { padding-inline: 4px; font-size: 10px; }
+  .mode-introduction h3 { font-size: 15px; }
+  .mode-introduction p { font-size: 10px; }
+  .calculation-tips ul { grid-template-columns: 1fr; }
 
   .cash-row { min-height: 51px; padding: 7px 9px; grid-template-columns: minmax(78px, 1fr) 108px minmax(68px, .85fr); gap: 7px; }
   .cash-row > b { font-size: 13px; }

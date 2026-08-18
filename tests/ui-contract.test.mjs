@@ -32,9 +32,19 @@ test('Beranda selalu menuju posisi paling atas', () => {
   assert.match(appJs, /window\.scrollTo\(\{\s*top:\s*0/);
 });
 
-test('HPP Produksi menjadi modul terpisah dan tidak mengganti Harga & HPP', () => {
-  assert.match(appJs, /code: 'PRODUCTION_HPP'/);
+test('Harga & HPP menggabungkan tiga mode dalam satu modul', () => {
+  assert.doesNotMatch(appJs, /code: 'PRODUCTION_HPP'/);
   assert.match(appJs, /code: 'SELLING_PRICE'/);
-  assert.match(appJs, /Estimasi jumlah produk/);
+  assert.match(appJs, /data-selling-mode="QUICK"/);
+  assert.match(appJs, /data-selling-mode="BUILDER"/);
+  assert.match(appJs, /data-selling-mode="PRODUCTION"/);
+  assert.match(appJs, />Harga Jual</);
   assert.match(appJs, /Gunakan sebagai HPP/);
+});
+
+test('setiap mode Harga & HPP memiliki tips dan panduan kontekstual', () => {
+  assert.match(appJs, /Tips Harga Jual|sellingTipsTemplate/);
+  assert.match(appJs, /Tenaga kerja satu batch/);
+  assert.match(appJs, /Overhead satu batch/);
+  assert.match(appJs, /sellingGuides\[state\.selling\.mode\]/);
 });

@@ -11,7 +11,7 @@ export function numberField(id, label, value, suffix = '', options = {}) {
   </label>`;
 }
 
-function escapeAttribute(value = '') {
+function escapeHtml(value = '') {
   return String(value)
     .replaceAll('&', '&amp;')
     .replaceAll('"', '&quot;')
@@ -24,7 +24,7 @@ export function costItemRow(group, item) {
   return `<article class="cost-item" data-cost-item data-item-id="${item.id}">
     <label class="cost-item-field cost-item-name">
       <span>Nama biaya</span>
-      <input type="text" data-cost-field="name" value="${escapeAttribute(item.name)}" placeholder="Contoh: Kulit lumpia">
+      <input type="text" data-cost-field="name" value="${escapeHtml(item.name)}" placeholder="Contoh: Kulit lumpia">
     </label>
     <label class="cost-item-field">
       <span>Harga beli</span>
@@ -42,10 +42,27 @@ export function costItemRow(group, item) {
       <span>Biaya terpakai</span>
       <output data-cost-output="${prefix}">Rp0</output>
     </div>
-    <button type="button" class="cost-item-remove" data-remove-cost aria-label="Hapus ${escapeAttribute(item.name || 'biaya')}">
+    <button type="button" class="cost-item-remove" data-remove-cost aria-label="Hapus ${escapeHtml(item.name || 'biaya')}">
       <span class="material-symbols-rounded" aria-hidden="true">delete</span>
     </button>
   </article>`;
+}
+
+export function tipsDisclosure(title, tips = []) {
+  return `<details class="calculation-tips">
+    <summary>
+      <span class="material-symbols-rounded" aria-hidden="true">tips_and_updates</span>
+      <span><b>${escapeHtml(title)}</b><small>Contoh pengisian dan cara menghitung</small></span>
+      <span class="material-symbols-rounded tips-chevron" aria-hidden="true">expand_more</span>
+    </summary>
+    <ul>
+      ${tips.map(tip => `<li>
+        <b>${escapeHtml(tip.title)}</b>
+        <p>${escapeHtml(tip.description)}</p>
+        ${tip.formula ? `<code>${escapeHtml(tip.formula)}</code>` : ''}
+      </li>`).join('')}
+    </ul>
+  </details>`;
 }
 
 export function calculatorHeader(title, kicker, { showReset = false } = {}) {

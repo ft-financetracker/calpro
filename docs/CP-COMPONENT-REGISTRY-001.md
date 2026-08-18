@@ -1,6 +1,6 @@
 # CalPro Component Registry
 
-Version: 4.2.0
+Version: 4.2.1
 
 ## Atoms
 
@@ -12,7 +12,8 @@ Version: 4.2.0
 ## Molecules
 
 - `search-field`: pencarian katalog kalkulator.
-- `segmented-control`: pilihan mode Ringkas atau Susun HPP.
+- `segmented-control`: pilihan mode Harga Jual, Susun HPP, atau HPP Produksi.
+- `calculation-tips`: panduan kontekstual yang dapat dibuka dan ditutup pada setiap mode.
 - `stepper`: pengaturan jumlah pecahan kas.
 - `result-metric`: label dan nilai ringkas di dalam result card.
 - `rounding-inline`: pilihan pembulatan Rp500 atau Rp1.000.

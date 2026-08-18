@@ -6,7 +6,7 @@ import { calculateHpp } from './calculators/hpp.js';
 import { calculateMarketplaceFee } from './calculators/marketplace.js';
 import { calculateProductionHpp } from './calculators/production-hpp.js';
 import { calculateSellingPrice } from './calculators/selling-price.js';
-import { calculatorHeader, costItemRow, numberField, resultMetric } from './components/templates.js';
+import { calculatorHeader, costItemRow, numberField, resultMetric, tipsDisclosure } from './components/templates.js';
 
 const rupiah = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
 const percent = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -15,8 +15,7 @@ const $$ = selector => [...document.querySelectorAll(selector)];
 
 const catalog = [
   { code: 'CASH_DEPOSIT', title: 'Setoran Kas', desc: 'Pecahan, total, dan selisih kas', icon: 'payments' },
-  { code: 'SELLING_PRICE', title: 'Harga & HPP', desc: 'Susun HPP dan rekomendasi harga', icon: 'sell' },
-  { code: 'PRODUCTION_HPP', title: 'HPP Produksi', desc: 'Biaya produksi dan HPP per produk', icon: 'inventory_2' },
+  { code: 'SELLING_PRICE', title: 'Harga & HPP', desc: 'Harga jual, HPP per unit, dan produksi', icon: 'sell' },
   { code: 'DISCOUNT', title: 'Diskon', desc: 'Harga akhir dan nilai hemat', icon: 'percent' },
   { code: 'MARKETPLACE_FEE', title: 'Biaya Marketplace', desc: 'Potongan dan penerimaan bersih', icon: 'storefront' }
 ];
@@ -28,20 +27,6 @@ const guides = {
     formula: 'Total aktual = Σ (nominal × jumlah)\nSelisih = Total aktual − Setoran catatan',
     note: 'Selisih positif berarti uang lebih. Selisih negatif berarti uang kurang.',
     example: 'Rp100.000 × 10 + Rp50.000 × 4 + Rp20.000 × 5 = Rp1.300.000. Jika catatan juga Rp1.300.000, statusnya Sesuai.'
-  },
-  SELLING_PRICE: {
-    purpose: 'Menyusun HPP produk atau memakai HPP yang sudah tersedia, lalu menentukan harga jual berdasarkan target margin.',
-    steps: ['Pilih Ringkas jika HPP sudah diketahui, atau Susun HPP untuk menjumlahkan komponen biaya.', 'Isi biaya lainnya dan target margin.', 'Pilih pembulatan Rp500 atau Rp1.000 di dalam card hasil.'],
-    formula: 'HPP = Bahan + Kemasan + Tenaga kerja + Overhead\nTotal modal = HPP + Biaya lainnya\nHarga teoritis = Total modal ÷ (1 − Target margin)\nMargin aktual = (Harga rekomendasi − Total modal) ÷ Harga rekomendasi',
-    note: 'Margin dihitung dari harga jual, bukan markup dari HPP. Harga rekomendasi dibulatkan ke atas agar target margin tidak turun.',
-    example: 'HPP Rp4.000, biaya lain Rp0, dan margin 27% menghasilkan harga teoritis Rp5.479. Pembulatan Rp500 memberi rekomendasi Rp5.500 dan margin aktual 27,27%.'
-  },
-  PRODUCTION_HPP: {
-    purpose: 'Menghitung HPP estimasi per produk dari seluruh biaya dalam satu kali produksi. Jumlah produk ditentukan sendiri oleh pengguna.',
-    steps: ['Isi estimasi jumlah produk yang akan dihasilkan.', 'Tambahkan rincian bahan baku dan kemasan berdasarkan pembelian serta pemakaian.', 'Isi total tenaga kerja dan overhead satu kali produksi.', 'Periksa HPP estimasi per produk atau gunakan hasilnya di modul Harga & HPP.'],
-    formula: 'Biaya terpakai = Harga beli ÷ Jumlah isi × Jumlah dipakai\nTotal produksi = Bahan + Kemasan + Tenaga kerja + Overhead\nHPP per produk = Total produksi ÷ Estimasi jumlah produk',
-    note: 'Jumlah isi dan jumlah dipakai harus menggunakan satuan yang sama, misalnya lembar dengan lembar, gram dengan gram, atau ml dengan ml.',
-    example: 'Kulit lumpia Rp12.000 isi 20 dan dipakai 20 menghasilkan biaya Rp12.000. Jika seluruh biaya produksi Rp62.000 untuk estimasi 20 produk, HPP-nya Rp3.100 per produk.'
   },
   DISCOUNT: {
     purpose: 'Menghitung harga yang dibayar pelanggan setelah diskon dari Harga Jual Awal—bukan dari HPP produk.',
@@ -56,6 +41,33 @@ const guides = {
     formula: 'Biaya persentase = Harga jual × Biaya layanan\nTotal biaya = Biaya persentase + Biaya tetap\nPenerimaan bersih = Harga jual − Total biaya\nBiaya efektif = Total biaya ÷ Harga jual',
     note: 'Biaya efektif dapat lebih besar daripada biaya layanan karena sudah memasukkan biaya tetap.',
     example: 'Harga Rp100.000, layanan 8%, dan biaya tetap Rp1.250 menghasilkan total biaya Rp9.250, penerimaan Rp90.750, dan biaya efektif 9,25%.'
+  }
+};
+
+const sellingGuides = {
+  QUICK: {
+    title: 'Harga Jual',
+    purpose: 'Menentukan harga jual ketika HPP per produk sudah diketahui.',
+    steps: ['Masukkan HPP satu produk.', 'Tambahkan biaya penjualan lain per produk bila ada.', 'Isi target margin.', 'Pilih pembulatan Rp500 atau Rp1.000.'],
+    formula: 'Total modal = HPP + Biaya penjualan lainnya\nHarga teoritis = Total modal ÷ (1 − Target margin)\nMargin aktual = (Harga rekomendasi − Total modal) ÷ Harga rekomendasi',
+    note: 'Gunakan HPP per produk, bukan total biaya satu kali produksi. Margin dihitung dari harga jual, bukan markup dari modal.',
+    example: 'HPP Rp3.830 dan margin 27% menghasilkan harga teoritis Rp5.247. Pembulatan Rp500 memberi rekomendasi Rp5.500.'
+  },
+  BUILDER: {
+    title: 'Susun HPP',
+    purpose: 'Menjumlahkan komponen biaya per produk dan langsung menentukan harga jual.',
+    steps: ['Masukkan bahan baku per produk.', 'Masukkan kemasan, tenaga kerja, dan overhead per produk.', 'Tambahkan biaya penjualan lainnya per produk.', 'Isi margin dan pilih pembulatan.'],
+    formula: 'HPP per produk = Bahan + Kemasan + Tenaga kerja + Overhead\nHarga teoritis = (HPP + Biaya penjualan lainnya) ÷ (1 − Target margin)',
+    note: 'Seluruh kolom pada mode ini adalah biaya per satu produk. Jangan memasukkan total biaya satu batch.',
+    example: 'Bahan Rp2.130 + kemasan Rp900 + tenaga kerja Rp500 + overhead Rp300 menghasilkan HPP Rp3.830.'
+  },
+  PRODUCTION: {
+    title: 'HPP Produksi',
+    purpose: 'Menghitung HPP estimasi per produk dari seluruh biaya dalam satu kali produksi.',
+    steps: ['Isi estimasi jumlah produk.', 'Tambahkan rincian bahan dan kemasan berdasarkan pembelian serta pemakaian.', 'Isi total tenaga kerja dan overhead satu batch.', 'Gunakan hasilnya sebagai HPP untuk menghitung harga jual.'],
+    formula: 'Biaya terpakai = Harga beli ÷ Jumlah isi × Jumlah dipakai\nTotal produksi = Bahan + Kemasan + Tenaga kerja + Overhead\nHPP per produk = Total produksi ÷ Estimasi jumlah produk',
+    note: 'Jumlah produk ditentukan pengguna. Jumlah isi dan jumlah dipakai harus menggunakan satuan yang sama.',
+    example: 'Total biaya Rp76.600 untuk estimasi 20 produk menghasilkan HPP Rp3.830 per produk.'
   }
 };
 
@@ -132,7 +144,6 @@ function bindInputCalculation(callback) {
 function renderCalculator() {
   if (state.active === 'CASH_DEPOSIT') return renderCash();
   if (state.active === 'SELLING_PRICE') return renderSellingPrice();
-  if (state.active === 'PRODUCTION_HPP') return renderProductionHpp();
   if (state.active === 'DISCOUNT') return renderDiscount();
   return renderMarketplace();
 }
@@ -197,30 +208,62 @@ function calculateCash() {
 }
 
 function sellingModeControl() {
-  return `<div class="segmented-control" role="group" aria-label="Mode perhitungan Harga dan HPP">
-    <button type="button" data-selling-mode="QUICK" class="${state.selling.mode === 'QUICK' ? 'active' : ''}" aria-pressed="${state.selling.mode === 'QUICK'}">Ringkas</button>
+  return `<div class="segmented-control selling-mode-control" role="group" aria-label="Mode perhitungan Harga dan HPP">
+    <button type="button" data-selling-mode="QUICK" class="${state.selling.mode === 'QUICK' ? 'active' : ''}" aria-pressed="${state.selling.mode === 'QUICK'}">Harga Jual</button>
     <button type="button" data-selling-mode="BUILDER" class="${state.selling.mode === 'BUILDER' ? 'active' : ''}" aria-pressed="${state.selling.mode === 'BUILDER'}">Susun HPP</button>
+    <button type="button" data-selling-mode="PRODUCTION" class="${state.selling.mode === 'PRODUCTION' ? 'active' : ''}" aria-pressed="${state.selling.mode === 'PRODUCTION'}">HPP Produksi</button>
   </div>`;
+}
+
+function bindSellingModeButtons() {
+  $$('[data-selling-mode]').forEach(button => {
+    button.addEventListener('click', () => {
+      state.selling.mode = button.dataset.sellingMode;
+      renderSellingPrice();
+    });
+  });
+}
+
+function sellingTipsTemplate() {
+  const tips = {
+    QUICK: [
+      { title: 'HPP produk', description: 'Masukkan HPP untuk satu produk. Gunakan hasil HPP Produksi jika sebelumnya menghitung satu batch.', formula: 'Contoh: Rp76.600 ÷ 20 produk = Rp3.830' },
+      { title: 'Biaya penjualan lainnya', description: 'Biaya per produk setelah produksi, seperti admin pembayaran tetap, subsidi promosi, atau komisi penjualan.', formula: 'Biaya per produk = Total biaya penjualan ÷ Produk terjual' },
+      { title: 'Target margin', description: 'Persentase laba dari harga jual. Margin berbeda dengan markup.', formula: 'Harga teoritis = Total modal ÷ (1 − margin)' }
+    ],
+    BUILDER: [
+      { title: 'Semua biaya harus per produk', description: 'Bahan, kemasan, tenaga kerja, dan overhead tidak boleh diisi dengan total satu batch.', formula: 'Biaya per produk = Total biaya batch ÷ Jumlah produk' },
+      { title: 'Tenaga kerja per produk', description: 'Hitung upah satu kali produksi lalu bagi jumlah produk yang dihasilkan.', formula: 'Rp10.000 ÷ 20 produk = Rp500' },
+      { title: 'Overhead per produk', description: 'Gabungkan gas, listrik, dan air yang dialokasikan untuk satu batch, lalu bagi jumlah produk.', formula: 'Rp6.000 ÷ 20 produk = Rp300' }
+    ],
+    PRODUCTION: [
+      { title: 'Estimasi jumlah produk', description: 'Jumlah ditentukan pengguna dan menjadi pembagi seluruh biaya produksi. Gunakan estimasi yang realistis.', formula: 'HPP = Total biaya produksi ÷ Estimasi produk' },
+      { title: 'Bahan dan kemasan', description: 'Jumlah isi dan jumlah dipakai harus memakai satuan yang sama: lembar, gram, ml, atau buah.', formula: 'Harga beli ÷ Jumlah isi × Jumlah dipakai' },
+      { title: 'Tenaga kerja satu batch', description: 'Gunakan upah per jam dikali waktu produksi. Jika dikerjakan sendiri, tetap berikan nilai atas waktu kerja.', formula: 'Rp15.000/jam × 2 jam = Rp30.000' },
+      { title: 'Overhead satu batch', description: 'Masukkan gas, listrik, air, dan biaya fasilitas yang dipakai dalam produksi.', formula: 'Gas Rp4.000 + listrik Rp1.000 + air Rp1.000 = Rp6.000' }
+    ]
+  };
+  return tipsDisclosure(`Tips ${sellingGuides[state.selling.mode].title}`, tips[state.selling.mode]);
 }
 
 function sellingInputTemplate() {
   if (state.selling.mode === 'QUICK') {
     const values = state.selling.quick;
-    return `<div class="pane-heading"><span>MODE RINGKAS</span><p>Gunakan jika HPP produk sudah tersedia.</p></div>
+    return `<div class="pane-heading"><span>MODE HARGA JUAL</span><p>Gunakan jika HPP per produk sudah tersedia.</p></div>
       <div class="selling-fields">
-        ${numberField('hpp', 'HPP produk', values.hpp)}
-        ${numberField('otherCost', 'Biaya lainnya', values.otherCost)}
+        ${numberField('hpp', 'HPP per produk', values.hpp)}
+        ${numberField('otherCost', 'Biaya penjualan lainnya', values.otherCost)}
         ${numberField('targetMargin', 'Target margin', values.targetMargin, '%', { max: 99.99, step: .01 })}
       </div>`;
   }
 
   const values = state.selling.builder;
-  return `<div class="pane-heading"><span>MODE SUSUN HPP</span><p>Jumlahkan biaya yang membentuk satu unit produk.</p></div>
+  return `<div class="pane-heading"><span>MODE SUSUN HPP</span><p>Masukkan seluruh komponen biaya untuk satu produk, bukan satu batch.</p></div>
     <div class="hpp-fields">
-      ${numberField('materialCost', 'Bahan baku', values.materialCost)}
-      ${numberField('packagingCost', 'Kemasan', values.packagingCost)}
-      ${numberField('laborCost', 'Tenaga kerja', values.laborCost)}
-      ${numberField('overheadCost', 'Overhead', values.overheadCost)}
+      ${numberField('materialCost', 'Bahan baku per produk', values.materialCost)}
+      ${numberField('packagingCost', 'Kemasan per produk', values.packagingCost)}
+      ${numberField('laborCost', 'Tenaga kerja per produk', values.laborCost)}
+      ${numberField('overheadCost', 'Overhead per produk', values.overheadCost)}
     </div>
     <div class="hpp-total-note"><span>HPP produk tersusun</span><b id="hppBuildValue"></b></div>
     <div class="supplementary-fields">
@@ -248,18 +291,16 @@ function sellingResultTemplate() {
 }
 
 function renderSellingPrice() {
+  if (state.selling.mode === 'PRODUCTION') return renderProductionHpp();
   $('#calculatorPanel').innerHTML = `${calculatorHeader('Harga & HPP', 'HARGA, HPP & MARGIN')}
+    ${sellingModeControl()}
     <div class="selling-layout">
-      <section class="selling-input-pane">${sellingModeControl()}${sellingInputTemplate()}</section>
+      <section class="selling-input-pane">${sellingInputTemplate()}</section>
       ${sellingResultTemplate()}
-    </div>`;
+    </div>
+    ${sellingTipsTemplate()}`;
 
-  $$('[data-selling-mode]').forEach(button => {
-    button.addEventListener('click', () => {
-      state.selling.mode = button.dataset.sellingMode;
-      renderSellingPrice();
-    });
-  });
+  bindSellingModeButtons();
   $$('[data-rounding]').forEach(button => {
     button.addEventListener('click', () => {
       state.selling.rounding = Number(button.dataset.rounding);
@@ -372,8 +413,9 @@ function productionResultTemplate() {
 
 function renderProductionHpp() {
   const values = state.production;
-  $('#calculatorPanel').innerHTML = `${calculatorHeader('HPP Produksi', 'BIAYA PRODUKSI PER UNIT')}
-    <p class="calculator-description">Masukkan estimasi jumlah produk dan biaya yang digunakan dalam satu kali produksi.</p>
+  $('#calculatorPanel').innerHTML = `${calculatorHeader('Harga & HPP', 'HARGA, HPP & PRODUKSI')}
+    ${sellingModeControl()}
+    <div class="mode-introduction"><span class="eyebrow">MODE HPP PRODUKSI</span><h3>Hitung biaya satu kali produksi</h3><p>Masukkan estimasi jumlah produk dan seluruh biaya yang digunakan dalam satu batch.</p></div>
     <section class="production-estimate-card">
       <div class="pane-heading"><span>DASAR PERHITUNGAN</span><h3>Estimasi jumlah produk</h3><p>Jumlah ini ditentukan sendiri oleh pengguna dan menjadi pembagi seluruh biaya produksi.</p></div>
       <div>
@@ -392,8 +434,10 @@ function renderProductionHpp() {
         ${numberField('productionOverheadCost', 'Overhead', values.overheadCost)}
       </div>
     </section>
+    ${sellingTipsTemplate()}
     ${productionResultTemplate()}`;
 
+  bindSellingModeButtons();
   $$('[data-add-cost]').forEach(button => {
     button.addEventListener('click', () => {
       readProductionState();
@@ -460,6 +504,7 @@ function calculateProduction() {
 
   state.currentResult = {
     input: {
+      mode: 'PRODUCTION',
       estimatedQuantity: result.estimatedQuantity,
       materials: result.materials,
       packaging: result.packaging,
@@ -560,8 +605,8 @@ function calculateMarketplaceResult() {
 
 function openInfo() {
   const item = catalog.find(entry => entry.code === state.active);
-  const guide = guides[state.active];
-  setText('#infoTitle', item.title);
+  const guide = state.active === 'SELLING_PRICE' ? sellingGuides[state.selling.mode] : guides[state.active];
+  setText('#infoTitle', state.active === 'SELLING_PRICE' ? `${item.title} · ${guide.title}` : item.title);
   setText('#infoPurpose', guide.purpose);
   $('#infoSteps').innerHTML = guide.steps.map(step => `<li>${step}</li>`).join('');
   setText('#infoFormula', guide.formula);

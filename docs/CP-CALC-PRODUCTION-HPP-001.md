@@ -1,11 +1,11 @@
 # Kontrak Kalkulator HPP Produksi
 
 **Document ID:** `CP-CALC-PRODUCTION-HPP-001`  
-**Version:** `4.2.0`
+**Version:** `4.2.1`
 
 ## Tujuan
 
-Menghitung HPP estimasi per produk berdasarkan biaya yang digunakan dalam satu kali produksi. CalPro tidak menentukan jumlah produk; pengguna mengisi sendiri estimasi jumlah produk.
+Menghitung HPP estimasi per produk melalui mode `HPP Produksi` di dalam modul `Harga & HPP`. CalPro tidak menentukan jumlah produk; pengguna mengisi sendiri estimasi jumlah produk.
 
 ## Input
 
@@ -31,4 +31,4 @@ Jika estimasi jumlah produk 0 atau kosong, HPP per produk bernilai 0 dan tombol 
 
 ## Integrasi Harga & HPP
 
-Tombol `Gunakan sebagai HPP` membulatkan HPP estimasi ke atas hingga rupiah penuh, memindahkannya ke input `HPP produk` pada mode Ringkas, lalu membuka modul Harga & HPP.
+Tombol `Gunakan sebagai HPP` membulatkan HPP estimasi ke atas hingga rupiah penuh, lalu memindahkannya ke input `HPP per produk` pada mode Harga Jual di dalam modul yang sama.
