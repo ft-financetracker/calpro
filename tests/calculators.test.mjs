@@ -37,6 +37,20 @@ test('HPP produksi aman saat estimasi jumlah produk kosong', () => {
   assert.equal(result.hppPerProduct, 0);
 });
 
+test('HPP produksi membantu menghitung tenaga kerja dan overhead satu batch', () => {
+  const result = calculateProductionHpp({
+    estimatedQuantity: 20,
+    laborRate: 15000,
+    laborHours: 2,
+    overhead: { gasCost: 4400, electricityCost: 1500, waterCost: 500, fuelCost: 2500, otherCost: 0 }
+  });
+
+  assert.equal(result.laborCost, 30000);
+  assert.equal(result.overheadCost, 8900);
+  assert.equal(result.totalProductionCost, 38900);
+  assert.equal(result.hppPerProduct, 1945);
+});
+
 test('diskon dihitung dari Harga Jual Awal', () => {
   const result = calculateDiscount({ sellingPrice: 250000, discountRate: 20 });
   assert.equal(result.finalPrice, 200000);

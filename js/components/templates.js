@@ -2,13 +2,16 @@ export function numberField(id, label, value, suffix = '', options = {}) {
   const max = options.max === undefined ? '' : ` max="${options.max}"`;
   const min = options.min === undefined ? 0 : options.min;
   const step = options.step === undefined ? '1' : options.step;
-  return `<label class="number-field">
-    <span>${label}</span>
-    <div>
+  const help = options.helpKey
+    ? `<button type="button" class="field-info-button" data-field-info="${options.helpKey}" aria-label="Lihat cara menghitung ${label}" aria-haspopup="dialog" aria-controls="infoDialog"><span class="material-symbols-rounded" aria-hidden="true">info</span></button>`
+    : '';
+  return `<div class="number-field">
+    <div class="number-field-label"><label for="${id}">${label}</label>${help}</div>
+    <div class="number-field-control">
       <input id="${id}" type="number" min="${min}"${max} step="${step}" inputmode="decimal" value="${value}">
       ${suffix ? `<b>${suffix}</b>` : ''}
     </div>
-  </label>`;
+  </div>`;
 }
 
 function escapeHtml(value = '') {
@@ -31,11 +34,11 @@ export function costItemRow(group, item) {
       <input type="number" min="0" step="1" inputmode="decimal" data-cost-field="purchasePrice" value="${item.purchasePrice}">
     </label>
     <label class="cost-item-field">
-      <span>Jumlah isi</span>
+      <span><span class="cost-label-desktop">Jumlah </span>Isi</span>
       <input type="number" min="0" step="0.01" inputmode="decimal" data-cost-field="purchaseQuantity" value="${item.purchaseQuantity}">
     </label>
     <label class="cost-item-field">
-      <span>Jumlah dipakai</span>
+      <span><span class="cost-label-desktop">Jumlah </span>Dipakai</span>
       <input type="number" min="0" step="0.01" inputmode="decimal" data-cost-field="usedQuantity" value="${item.usedQuantity}">
     </label>
     <div class="cost-item-output">

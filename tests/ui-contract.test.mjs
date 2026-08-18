@@ -7,6 +7,7 @@ const appCss = fs.readFileSync(new URL('../css/app.css', import.meta.url), 'utf8
 const componentsCss = fs.readFileSync(new URL('../css/components.css', import.meta.url), 'utf8');
 const responsiveCss = fs.readFileSync(new URL('../css/responsive.css', import.meta.url), 'utf8');
 const appJs = fs.readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
+const templatesJs = fs.readFileSync(new URL('../js/components/templates.js', import.meta.url), 'utf8');
 
 test('hero memakai CTA terpisah di kanan dan bukan dekorasi lama', () => {
   assert.match(html, /class="hero-actions"/);
@@ -47,4 +48,25 @@ test('setiap mode Harga & HPP memiliki tips dan panduan kontekstual', () => {
   assert.match(appJs, /Tenaga kerja satu batch/);
   assert.match(appJs, /Overhead satu batch/);
   assert.match(appJs, /sellingGuides\[state\.selling\.mode\]/);
+});
+
+test('HPP Produksi membimbing biaya pendukung dan menjaga kartu mobile ringkas', () => {
+  assert.match(appJs, /productionLaborRate/);
+  assert.match(appJs, /productionLaborHours/);
+  assert.match(appJs, /productionGasCost/);
+  assert.match(appJs, /Cerita praktik: Bu Rina/);
+  assert.match(responsiveCss, /@media \(max-width: 800px\)[\s\S]*\.cost-item\s*\{[^}]*grid-template-columns:\s*repeat\(3,/);
+});
+
+test('kolom biaya pendukung menyediakan tombol info rumus yang kontekstual', () => {
+  assert.match(templatesJs, /data-field-info="\$\{options\.helpKey\}"/);
+  assert.match(appJs, /function openFieldInfo\(key\)/);
+  assert.match(appJs, /data-field-info/);
+  assert.match(appJs, /helpKey: 'laborRate'/);
+  assert.match(appJs, /helpKey: 'gasCost'/);
+  assert.match(appJs, /helpKey: 'electricityCost'/);
+  assert.match(appJs, /helpKey: 'waterCost'/);
+  assert.match(appJs, /helpKey: 'fuelCost'/);
+  assert.match(appJs, /productionFuelCost/);
+  assert.match(componentsCss, /\.field-info-button/);
 });

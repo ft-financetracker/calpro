@@ -65,9 +65,68 @@ const sellingGuides = {
     title: 'HPP Produksi',
     purpose: 'Menghitung HPP estimasi per produk dari seluruh biaya dalam satu kali produksi.',
     steps: ['Isi estimasi jumlah produk.', 'Tambahkan rincian bahan dan kemasan berdasarkan pembelian serta pemakaian.', 'Isi total tenaga kerja dan overhead satu batch.', 'Gunakan hasilnya sebagai HPP untuk menghitung harga jual.'],
-    formula: 'Biaya terpakai = Harga beli ÷ Jumlah isi × Jumlah dipakai\nTotal produksi = Bahan + Kemasan + Tenaga kerja + Overhead\nHPP per produk = Total produksi ÷ Estimasi jumlah produk',
-    note: 'Jumlah produk ditentukan pengguna. Jumlah isi dan jumlah dipakai harus menggunakan satuan yang sama.',
-    example: 'Total biaya Rp76.600 untuk estimasi 20 produk menghasilkan HPP Rp3.830 per produk.'
+    formula: 'Biaya terpakai = Harga beli ÷ Jumlah isi × Jumlah dipakai\nTenaga kerja batch = Tarif per jam × Lama produksi\nOverhead batch = Gas + Listrik + Air + Bensin bahan + Lainnya\nHPP per produk = Total produksi ÷ Estimasi jumlah produk',
+    note: 'Tenaga kerja adalah nilai waktu yang dipakai untuk satu batch, bukan langsung memasukkan gaji bulanan. Tekan tombol i di samping judul kolom untuk melihat rumus dan contoh pengisiannya.',
+    example: 'Bu Rina membuat 20 lumpia selama 2 jam. Tarif kerja Rp15.000/jam menghasilkan tenaga kerja Rp30.000. LPG Rp4.400, listrik Rp1.500, air Rp500, dan bensin membeli bahan Rp2.500 menghasilkan overhead Rp8.900.'
+  }
+};
+
+const fieldGuides = {
+  laborRate: {
+    title: 'Tarif tenaga kerja per jam',
+    purpose: 'Memberikan nilai yang wajar untuk setiap satu jam kerja produksi, termasuk bila usaha masih dikerjakan sendiri.',
+    steps: ['Jika sudah memiliki tarif harian, bagi tarif tersebut dengan jam kerja sehari.', 'Jika memakai gaji bulanan, bagi gaji dengan total jam kerja bulanan.', 'Masukkan hasilnya sebagai tarif per jam.'],
+    formula: 'Tarif per jam = Gaji bulanan ÷ Jam kerja bulanan',
+    note: 'Jangan langsung memasukkan seluruh gaji bulanan karena satu batch hanya memakai sebagian waktu kerja.',
+    example: 'Gaji Rp2.400.000 ÷ 200 jam kerja = Rp12.000 per jam.'
+  },
+  laborHours: {
+    title: 'Lama produksi satu batch',
+    purpose: 'Mengukur waktu yang benar-benar digunakan untuk menyelesaikan satu kali produksi.',
+    steps: ['Mulai hitung dari persiapan bahan.', 'Tambahkan waktu memasak atau merakit.', 'Tambahkan waktu pengemasan yang dikerjakan dalam batch tersebut.'],
+    formula: 'Tenaga kerja batch = Tarif per jam × Lama produksi',
+    note: 'Waktu menunggu tanpa aktivitas dapat dikurangi jika pekerja mengerjakan pekerjaan produktif lain.',
+    example: 'Tarif Rp15.000/jam × 2 jam produksi = Rp30.000 per batch.'
+  },
+  gasCost: {
+    title: 'Gas/LPG per batch',
+    purpose: 'Mengalokasikan biaya isi ulang LPG hanya untuk bagian yang digunakan dalam satu batch.',
+    steps: ['Catat harga isi ulang tabung.', 'Perkirakan tabung tersebut dapat dipakai untuk berapa batch atau berapa jam.', 'Bagi harga isi ulang berdasarkan pemakaian tersebut.'],
+    formula: 'Biaya LPG batch = Harga isi ulang ÷ Jumlah batch pemakaian',
+    note: 'Jika lebih mudah memakai waktu: Harga isi ulang ÷ Total jam pemakaian × Jam produksi.',
+    example: 'LPG Rp22.000 digunakan untuk 5 batch → Rp22.000 ÷ 5 = Rp4.400 per batch.'
+  },
+  electricityCost: {
+    title: 'Listrik per batch',
+    purpose: 'Menghitung listrik berdasarkan daya alat dan lama alat digunakan.',
+    steps: ['Lihat daya watt pada label alat.', 'Catat lama alat digunakan.', 'Gunakan tarif per kWh dari tagihan atau token listrik.'],
+    formula: 'Biaya = Watt ÷ 1.000 × Jam penggunaan × Tarif per kWh',
+    note: 'Jika ada beberapa alat, hitung masing-masing lalu jumlahkan.',
+    example: '500 watt ÷ 1.000 × 2 jam × Rp1.500 = Rp1.500 per batch.'
+  },
+  waterCost: {
+    title: 'Air per batch',
+    purpose: 'Mengalokasikan air yang dipakai untuk mencuci bahan, memasak, dan membersihkan peralatan produksi.',
+    steps: ['Untuk PDAM, gunakan tagihan bulanan yang berkaitan dengan produksi.', 'Tentukan estimasi jumlah batch per bulan.', 'Bagi tagihan produksi dengan jumlah batch.'],
+    formula: 'Biaya air batch = Tagihan air produksi ÷ Batch per bulan',
+    note: 'Jika menggunakan air galon: Harga galon ÷ Isi liter × Liter yang dipakai.',
+    example: 'Tagihan air produksi Rp60.000 ÷ 20 batch = Rp3.000 per batch.'
+  },
+  fuelCost: {
+    title: 'Bensin/transport bahan',
+    purpose: 'Menghitung bahan bakar yang digunakan khusus untuk membeli atau mengambil bahan produksi.',
+    steps: ['Hitung jarak pulang-pergi.', 'Gunakan konsumsi kendaraan dalam km per liter.', 'Kalikan kebutuhan liter dengan harga bensin.'],
+    formula: 'Biaya bensin = Jarak PP ÷ Km per liter × Harga per liter',
+    note: 'Bensin mengantar pesanan masuk biaya penjualan. Bensin pribadi tidak masuk HPP.',
+    example: '10 km ÷ 40 km/liter × Rp10.000 = Rp2.500 per batch.'
+  },
+  otherOverhead: {
+    title: 'Overhead lainnya',
+    purpose: 'Menampung biaya produksi lain seperti sewa, penyusutan alat, perawatan, dan kebersihan.',
+    steps: ['Catat biaya bulanan atau tahunan.', 'Ubah menjadi biaya bulanan bila diperlukan.', 'Bagi dengan estimasi jumlah batch per bulan.'],
+    formula: 'Biaya per batch = Biaya bulanan ÷ Batch per bulan',
+    note: 'Masukkan hanya biaya yang berkaitan dengan proses produksi.',
+    example: 'Penyusutan alat Rp25.000/bulan ÷ 20 batch = Rp1.250 per batch.'
   }
 };
 
@@ -89,8 +148,11 @@ const state = {
     packaging: [
       { id: 3, name: 'Kemasan', purchasePrice: 25000, purchaseQuantity: 50, usedQuantity: 20 }
     ],
-    laborCost: 10000,
-    overheadCost: 6000,
+    laborRate: 15000,
+    laborHours: 2,
+    laborCost: 30000,
+    overhead: { gasCost: 4400, electricityCost: 1500, waterCost: 500, fuelCost: 2500, otherCost: 0 },
+    overheadCost: 8900,
     nextItemId: 4
   }
 };
@@ -135,6 +197,7 @@ function selectCalculator(code, scroll = false) {
 
 function bindInfoButtons() {
   $$('[data-info]').forEach(button => { button.addEventListener('click', openInfo); });
+  $$('[data-field-info]').forEach(button => { button.addEventListener('click', () => openFieldInfo(button.dataset.fieldInfo)); });
 }
 
 function bindInputCalculation(callback) {
@@ -239,8 +302,10 @@ function sellingTipsTemplate() {
     PRODUCTION: [
       { title: 'Estimasi jumlah produk', description: 'Jumlah ditentukan pengguna dan menjadi pembagi seluruh biaya produksi. Gunakan estimasi yang realistis.', formula: 'HPP = Total biaya produksi ÷ Estimasi produk' },
       { title: 'Bahan dan kemasan', description: 'Jumlah isi dan jumlah dipakai harus memakai satuan yang sama: lembar, gram, ml, atau buah.', formula: 'Harga beli ÷ Jumlah isi × Jumlah dipakai' },
-      { title: 'Tenaga kerja satu batch', description: 'Gunakan upah per jam dikali waktu produksi. Jika dikerjakan sendiri, tetap berikan nilai atas waktu kerja.', formula: 'Rp15.000/jam × 2 jam = Rp30.000' },
-      { title: 'Overhead satu batch', description: 'Masukkan gas, listrik, air, dan biaya fasilitas yang dipakai dalam produksi.', formula: 'Gas Rp4.000 + listrik Rp1.000 + air Rp1.000 = Rp6.000' }
+      { title: 'Tenaga kerja satu batch', description: 'Bukan langsung gaji bulanan. Gunakan tarif per jam dikali waktu pembuatan satu batch. Jika dikerjakan sendiri, waktu pemilik tetap memiliki nilai.', formula: 'Rp15.000/jam × 2 jam = Rp30.000' },
+      { title: 'Jika pegawai digaji bulanan', description: 'Ubah gaji bulanan menjadi tarif per jam, lalu kalikan waktu produksi batch.', formula: 'Rp2.400.000 ÷ 200 jam = Rp12.000/jam' },
+      { title: 'Overhead satu batch', description: 'Isi gas/LPG, listrik, air, bensin bahan, dan biaya pendukung lain yang benar-benar dipakai untuk batch tersebut.', formula: 'LPG Rp4.400 + listrik Rp1.500 + air Rp500 + bensin Rp2.500 = Rp8.900' },
+      { title: 'Cerita praktik: Bu Rina', description: 'Bu Rina membuat 20 lumpia selama 2 jam. Nilai kerjanya Rp30.000 dan overhead batch Rp8.900. Kedua biaya tetap dibagi ke 20 produk.', formula: '(Rp30.000 + Rp8.900) ÷ 20 = Rp1.945/produk' }
     ]
   };
   return tipsDisclosure(`Tips ${sellingGuides[state.selling.mode].title}`, tips[state.selling.mode]);
@@ -428,10 +493,27 @@ function renderProductionHpp() {
       ${productionCostGroup('packaging', 'Kemasan', 'Gunakan satuan pembelian dan pemakaian yang sama.', values.packaging, 'packagingBatchValue')}
     </div>
     <section class="production-support-costs">
-      <div class="pane-heading"><span>BIAYA PENDUKUNG</span><h3>Biaya satu kali produksi</h3><p>Masukkan total biaya batch, bukan biaya per produk.</p></div>
-      <div class="field-grid two-columns">
-        ${numberField('productionLaborCost', 'Tenaga kerja', values.laborCost)}
-        ${numberField('productionOverheadCost', 'Overhead', values.overheadCost)}
+      <div class="pane-heading"><span>BIAYA PENDUKUNG</span><h3>Dibantu hitung per batch</h3><p>Isi dasar perhitungannya; CalPro akan membentuk total tenaga kerja dan overhead.</p></div>
+      <div class="support-cost-grid">
+        <article class="support-cost-card">
+          <header><span class="material-symbols-rounded" aria-hidden="true">schedule</span><div><h4>Tenaga kerja batch</h4><p>Nilai waktu untuk menyelesaikan satu kali produksi.</p></div></header>
+          <div class="field-grid two-columns support-fields">
+            ${numberField('productionLaborRate', 'Tarif per jam', values.laborRate, '', { helpKey: 'laborRate' })}
+            ${numberField('productionLaborHours', 'Lama produksi', values.laborHours, 'jam', { step: 0.25, helpKey: 'laborHours' })}
+          </div>
+          <div class="support-total"><span>Total tenaga kerja</span><b id="productionLaborTotalValue"></b></div>
+        </article>
+        <article class="support-cost-card">
+          <header><span class="material-symbols-rounded" aria-hidden="true">bolt</span><div><h4>Overhead batch</h4><p>Biaya pendukung yang digunakan selama produksi.</p></div></header>
+          <div class="field-grid support-overhead-fields">
+            ${numberField('productionGasCost', 'Gas/LPG', values.overhead.gasCost, '', { helpKey: 'gasCost' })}
+            ${numberField('productionElectricityCost', 'Listrik', values.overhead.electricityCost, '', { helpKey: 'electricityCost' })}
+            ${numberField('productionWaterCost', 'Air', values.overhead.waterCost, '', { helpKey: 'waterCost' })}
+            ${numberField('productionFuelCost', 'Bensin/transport', values.overhead.fuelCost, '', { helpKey: 'fuelCost' })}
+            ${numberField('productionOtherOverhead', 'Lainnya', values.overhead.otherCost, '', { helpKey: 'otherOverhead' })}
+          </div>
+          <div class="support-total"><span>Total overhead</span><b id="productionOverheadTotalValue"></b></div>
+        </article>
       </div>
     </section>
     ${sellingTipsTemplate()}
@@ -475,8 +557,17 @@ function readProductionState() {
   state.production.estimatedQuantity = Number($('#estimatedQuantity')?.value) || 0;
   state.production.materials = readProductionCostItems('materials');
   state.production.packaging = readProductionCostItems('packaging');
-  state.production.laborCost = Number($('#productionLaborCost')?.value) || 0;
-  state.production.overheadCost = Number($('#productionOverheadCost')?.value) || 0;
+  state.production.laborRate = Number($('#productionLaborRate')?.value) || 0;
+  state.production.laborHours = Number($('#productionLaborHours')?.value) || 0;
+  state.production.laborCost = state.production.laborRate * state.production.laborHours;
+  state.production.overhead = {
+    gasCost: Number($('#productionGasCost')?.value) || 0,
+    electricityCost: Number($('#productionElectricityCost')?.value) || 0,
+    waterCost: Number($('#productionWaterCost')?.value) || 0,
+    fuelCost: Number($('#productionFuelCost')?.value) || 0,
+    otherCost: Number($('#productionOtherOverhead')?.value) || 0
+  };
+  state.production.overheadCost = Object.values(state.production.overhead).reduce((total, value) => total + value, 0);
   return state.production;
 }
 
@@ -494,6 +585,8 @@ function calculateProduction() {
   setText('#overheadPerProductValue', rupiah.format(Math.ceil(result.overheadCostPerProduct)));
   setText('#productionTotalValue', rupiah.format(Math.round(result.totalProductionCost)));
   setText('#productionQuantityValue', `${result.estimatedQuantity} produk`);
+  setText('#productionLaborTotalValue', rupiah.format(Math.round(result.laborCost)));
+  setText('#productionOverheadTotalValue', rupiah.format(Math.round(result.overheadCost)));
 
   const quantityInput = $('#estimatedQuantity');
   const quantityValid = result.estimatedQuantity > 0;
@@ -508,7 +601,10 @@ function calculateProduction() {
       estimatedQuantity: result.estimatedQuantity,
       materials: result.materials,
       packaging: result.packaging,
+      laborRate: state.production.laborRate,
+      laborHours: state.production.laborHours,
       laborCost: result.laborCost,
+      overheadBreakdown: state.production.overhead,
       overheadCost: result.overheadCost
     },
     result: {
@@ -601,6 +697,18 @@ function calculateMarketplaceResult() {
     result: { percentageCost: result.percentageCost, totalCost: result.totalCost, netRevenue: result.netRevenue, effectiveRate: result.effectiveRate },
     title: 'Penerimaan Bersih Marketplace'
   };
+}
+
+function openFieldInfo(key) {
+  const guide = fieldGuides[key];
+  if (!guide) return;
+  setText('#infoTitle', guide.title);
+  setText('#infoPurpose', guide.purpose);
+  $('#infoSteps').innerHTML = guide.steps.map(step => `<li>${step}</li>`).join('');
+  setText('#infoFormula', guide.formula);
+  setText('#infoNote', guide.note);
+  setText('#infoExample', guide.example);
+  $('#infoDialog').showModal();
 }
 
 function openInfo() {

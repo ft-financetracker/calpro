@@ -2,7 +2,7 @@
 
 Calculator Pro — Finance Tracker by Qulaimun.
 
-Versi frontend saat ini: **V4.2.1**.
+Versi frontend saat ini: **V4.2.3**.
 
 ## Menjalankan frontend
 
@@ -18,7 +18,7 @@ Gunakan static server, misalnya `npx serve .`; jangan membuka `index.html` langs
 6. Masukkan URL deployment ke `js/config.js`.
 7. Publikasikan folder frontend melalui GitHub Pages.
 
-Untuk database yang sudah berisi transaksi, jangan menjalankan ulang `setupCalProDatabase()` karena fungsi tersebut ditujukan untuk instalasi baru. Setelah menyalin source Apps Script V4.2.1, jalankan `migrateCalProV421()` satu kali untuk memperbarui master kalkulator tanpa menghapus data lama.
+V4.2.3 tidak memerlukan migrasi Spreadsheet atau deployment Apps Script baru. Jangan menjalankan ulang `setupCalProDatabase()` pada database yang sudah berisi transaksi.
 
 ## Modul kalkulator
 
@@ -30,6 +30,8 @@ Untuk database yang sudah berisi transaksi, jangan menjalankan ulang `setupCalPr
 Kalkulator Harga & HPP selalu membentuk `Total modal = HPP + Biaya lainnya` sebelum menerapkan target margin. Harga rekomendasi dibulatkan ke atas sesuai pilihan Rp500 atau Rp1.000. Rincian kontrak kalkulasi tersedia di `docs/CP-CALC-PRICE-001.md`.
 
 Mode HPP Produksi tidak menentukan jumlah produk secara otomatis. Pengguna mengisi estimasi jumlah produk, kemudian aplikasi menghitung `Biaya terpakai = Harga beli ÷ Jumlah isi × Jumlah dipakai` dan `HPP per produk = Total biaya produksi ÷ Estimasi jumlah produk`.
+
+Tenaga kerja batch dihitung dari `Tarif per jam × Lama produksi`. Overhead batch dibantu melalui rincian Gas/LPG, listrik, air, bensin/transport pembelian bahan, dan biaya pendukung lainnya. Tombol `i` di samping setiap judul biaya membuka rumus, langkah, serta contoh pengisian tanpa memenuhi layar utama. Pada layar sampai 800 px, rincian bahan ditampilkan sebagai kartu ringkas dengan Harga, Isi, dan Dipakai dalam satu baris.
 
 ## Pengujian
 

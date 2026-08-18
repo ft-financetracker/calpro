@@ -25,14 +25,25 @@ export function calculateProductionHpp({
   estimatedQuantity = 0,
   materials = [],
   packaging = [],
+  laborRate,
+  laborHours,
   laborCost = 0,
+  overhead,
   overheadCost = 0
 } = {}) {
   const quantity = Math.floor(asNonNegativeNumber(estimatedQuantity));
   const materialItems = calculateCostItems(materials);
   const packagingItems = calculateCostItems(packaging);
-  const safeLaborCost = asNonNegativeNumber(laborCost);
-  const safeOverheadCost = asNonNegativeNumber(overheadCost);
+  const hasLaborBreakdown = laborRate !== undefined || laborHours !== undefined;
+  const safeLaborRate = asNonNegativeNumber(laborRate);
+  const safeLaborHours = asNonNegativeNumber(laborHours);
+  const safeLaborCost = hasLaborBreakdown ? safeLaborRate * safeLaborHours : asNonNegativeNumber(laborCost);
+  const overheadBreakdown = overhead && typeof overhead === 'object'
+    ? Object.fromEntries(Object.entries(overhead).map(([key, value]) => [key, asNonNegativeNumber(value)]))
+    : null;
+  const safeOverheadCost = overheadBreakdown
+    ? Object.values(overheadBreakdown).reduce((total, value) => total + value, 0)
+    : asNonNegativeNumber(overheadCost);
   const materialCost = materialItems.reduce((total, item) => total + item.usedCost, 0);
   const packagingCost = packagingItems.reduce((total, item) => total + item.usedCost, 0);
   const totalProductionCost = materialCost + packagingCost + safeLaborCost + safeOverheadCost;
@@ -44,7 +55,10 @@ export function calculateProductionHpp({
     packaging: packagingItems,
     materialCost,
     packagingCost,
+    laborRate: safeLaborRate,
+    laborHours: safeLaborHours,
     laborCost: safeLaborCost,
+    overheadBreakdown,
     overheadCost: safeOverheadCost,
     totalProductionCost,
     materialCostPerProduct: divide(materialCost),

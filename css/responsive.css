@@ -19,6 +19,13 @@
   .standard-result-card .result-card-main { grid-template-columns: 1.2fr 1fr; }
   .production-estimate-card,
   .production-support-costs { grid-template-columns: 1fr; gap: 13px; }
+  .cost-item { padding: 9px; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: 7px; }
+  .cost-item-name { grid-column: 1 / -1; padding-right: 39px; }
+  .cost-item-output { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .cost-item-output > span { margin: 0; }
+  .cost-item-remove { position: absolute; top: 9px; right: 9px; }
+  .cost-label-desktop { display: none; }
+  .support-cost-grid { grid-template-columns: 1fr; }
 }
 
 /* MOBILE */
@@ -70,8 +77,8 @@
 
   .field-grid, .field-grid.two-columns, .hpp-fields, .supplementary-fields { grid-template-columns: 1fr; }
   .field-grid .number-field:last-child, .hpp-fields .number-field:last-child { grid-column: auto; }
-  .number-field > span { font-size: 11px; }
-  .number-field > div { height: 44px; }
+  .number-field-label { font-size: 11px; }
+  .number-field-control { height: 44px; }
   .number-field input { font-size: 16px; }
   .segmented-control { margin-bottom: 13px; }
   .segmented-control button { min-height: 36px; font-size: 11px; }
@@ -104,16 +111,24 @@
   .production-section-header h3 { font-size: 13px; }
   .production-section-header p { font-size: 9px; }
   .production-add-button { min-height: 34px; padding-inline: 9px; }
-  .cost-item { padding: 9px; grid-template-columns: 1fr 1fr; align-items: end; gap: 7px; }
+  .cost-item { padding: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
   .cost-item-name { grid-column: 1 / -1; padding-right: 39px; }
-  .cost-item-field:nth-of-type(4) { grid-column: auto; }
   .cost-item-output { grid-column: 1 / -1; }
-  .cost-item-remove { position: absolute; top: 9px; right: 9px; }
-  .cost-item-field input { height: 36px; font-size: 11px; }
+  .cost-item-remove { top: 8px; right: 8px; }
+  .cost-item-field > span { font-size: 8px; }
+  .cost-item-field input { height: 34px; padding-inline: 7px; font-size: 10px; }
   .cost-item-output { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .cost-item-output > span { margin: 0; }
   .production-support-costs { padding: 13px; }
   .production-section-total { justify-content: space-between; }
+  .support-cost-card { padding: 10px; }
+  .support-fields.field-grid.two-columns,
+  .support-overhead-fields.field-grid { grid-template-columns: 1fr 1fr; gap: 7px; }
+  .support-cost-card .number-field-label { min-height: 16px; margin-bottom: 4px; font-size: 9px; }
+  .support-cost-card .number-field-control { height: 38px; }
+  .field-info-button { width: 17px; height: 17px; }
+  .field-info-button .material-symbols-rounded { font-size: 13px; }
+  .support-cost-card .number-field input { font-size: 12px; }
 
   .result-card { border-radius: 13px; }
   .result-card-main { padding: 14px; display: block; }
